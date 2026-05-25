@@ -20,7 +20,7 @@ export function useLocale() {
 
 // ─── useTranslations ──────────────────────────────────────────────────────────
 // Central place for all UI strings — extend as you add pages
-const UI_STRINGS: Record<string, Record<Locale, string>> = {
+const UI_STRINGS: Record<string, Partial<Record<Locale, string>>> = {
   add_to_cart:        { uz: "Savatga qo'shish",     ru: 'В корзину',         ko: '장바구니' },
   buy_now:            { uz: 'Hozir sotib olish',     ru: 'Купить сейчас',     ko: '지금 구매' },
   in_stock:           { uz: 'Mavjud',                ru: 'В наличии',         ko: '재고 있음' },
@@ -57,7 +57,7 @@ const UI_STRINGS: Record<string, Record<Locale, string>> = {
 export function useTranslations() {
   const locale = useUIStore(s => s.locale)
   function tr(key: keyof typeof UI_STRINGS): string {
-    return UI_STRINGS[key]?.[locale] ?? UI_STRINGS[key]?.uz ?? key
+    return UI_STRINGS[key]?.[locale] ?? UI_STRINGS[key]?.uz ?? key as string
   }
   return { tr, locale }
 }

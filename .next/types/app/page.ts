@@ -1,4 +1,4 @@
-// File: C:\Users\GME\Downloads\koruzmarket-FINAL\koruzmarket-new\src\app\page.tsx
+// File: /home/user/uzkormarket/src/app/page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

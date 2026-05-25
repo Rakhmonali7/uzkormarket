@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, ArrowLeft, MapPin, CreditCard, ClipboardCheck, ExternalLink, Shield, Zap } from 'lucide-react'
 import { cn, formatPrice, getCurrency } from '@/lib/utils'
@@ -70,10 +70,11 @@ export default function CheckoutPage() {
     notes:         '',
   })
 
-  if (!items.length) {
-    router.replace(ROUTES.cart)
-    return null
-  }
+  useEffect(() => {
+    if (!items.length) router.replace(ROUTES.cart)
+  }, [items.length, router])
+
+  if (!items.length) return null
 
   async function placeOrder() {
     setPlacing(true)
@@ -86,7 +87,7 @@ export default function CheckoutPage() {
           currency,
         })) as any,
         deliveryAddress: address,
-        paymentMethod:   'unired',
+        paymentMethod:   'unired' as any,
         subtotal, deliveryFee: DELIVERY, discount: 0,
         total, currency,
       })
@@ -140,7 +141,7 @@ export default function CheckoutPage() {
               </div>
               <span className={cn(
                 'hidden sm:block text-sm font-semibold transition-colors',
-                i === step ? 'text-zinc-900 dark:text-zinc-100' : i < step ? 'text-brand-500' : 'text-zinc-400'
+                i === step ? 'text-zinc-900 dark:text-zinc-100' : i < step ? 'text-brand-600' : 'text-zinc-400'
               )}>{label}</span>
             </div>
             {i < STEPS.length - 1 && (
@@ -231,7 +232,7 @@ export default function CheckoutPage() {
               {/* Unired payment card */}
               <div className="card-glass p-5 space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cobalt text-white text-2xl font-bold shadow-cobalt flex-shrink-0">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cobalt text-white text-2xl font-bold shadow-cobalt flex-shrink-0" style={{ background: 'linear-gradient(135deg,#007AFF,#0052b0)' }}>
                     U
                   </div>
                   <div>
@@ -361,7 +362,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between font-bold text-zinc-900 dark:text-white pt-1 border-t border-zinc-100 dark:border-zinc-800">
                 <span>Total</span>
-                <span className="text-brand-500">{formatPrice(total, currency, locale)}</span>
+                <span className="font-bold text-zinc-900 dark:text-white">{formatPrice(total, currency, locale)}</span>
               </div>
             </div>
 
@@ -384,7 +385,7 @@ function Field({ label, value, onChange, placeholder, required, colSpan }: {
   return (
     <div className={cn(colSpan === 'full' && 'col-span-2')}>
       <label className="label">
-        {label}{required && <span className="ml-0.5 text-brand-500">*</span>}
+        {label}{required && <span className="ml-0.5 text-cobalt-500">*</span>}
       </label>
       <input
         type="text" value={value}

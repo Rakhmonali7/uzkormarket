@@ -95,7 +95,7 @@ export default function SellerPage() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-brand">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1C1E] text-white shadow-brand">
                 <Store className="h-4 w-4" />
               </div>
               <div>
@@ -160,10 +160,7 @@ export default function SellerPage() {
                   style={{ animationDelay: `${i * 60}ms` }}>
 
                   {/* Product image placeholder */}
-                  <div className={cn(
-                    'h-14 w-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl',
-                    p.origin === 'KR' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20'
-                  )}>
+                  <div className="h-14 w-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl bg-zinc-100 dark:bg-zinc-800">
                     {p.origin === 'KR' ? '🇰🇷' : '🇺🇿'}
                   </div>
 
@@ -246,9 +243,7 @@ export default function SellerPage() {
                           className={cn(
                             'flex-1 flex items-center gap-3 rounded-xl border-2 p-3.5 transition-all text-left',
                             form.origin === val
-                              ? val === 'KR'
-                                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                                : 'border-cobalt-500 bg-cobalt-50 dark:bg-cobalt-950/20'
+                              ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20'
                               : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
                           )}>
                           <span className="text-2xl">{flag}</span>
@@ -256,7 +251,7 @@ export default function SellerPage() {
                             <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{val}</div>
                             <div className="text-xs text-zinc-500">{label}</div>
                           </div>
-                          {form.origin === val && <CheckCircle2 className={cn('h-5 w-5 ml-auto', val === 'KR' ? 'text-brand-500' : 'text-cobalt-500')} />}
+                          {form.origin === val && <CheckCircle2 className="h-5 w-5 ml-auto text-brand-600" />}
                         </button>
                       ))}
                     </div>
@@ -541,7 +536,7 @@ export default function SellerPage() {
             <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Analytics</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Total Revenue',  value: '₩2,400,000',  sub: '+12% this month',   color: 'from-brand-500 to-brand-700' },
+                { label: 'Total Revenue',  value: '₩2,400,000',  sub: '+12% this month',   color: 'from-zinc-800 to-zinc-900' },
                 { label: 'Products Sold',  value: '140',           sub: '3 products listed', color: 'from-cobalt-500 to-cobalt-700' },
                 { label: 'Avg. Rating',    value: '4.8 ★',         sub: 'From 23 reviews',   color: 'from-amber-500 to-orange-600' },
               ].map((s, i) => (
@@ -570,7 +565,7 @@ export default function SellerPage() {
 function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div className="flex items-center gap-2.5 pb-2 border-b border-zinc-100 dark:border-zinc-700/50">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-brand text-white">
+      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1C1C1E] text-white">
         {icon}
       </div>
       <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200">{title}</span>
