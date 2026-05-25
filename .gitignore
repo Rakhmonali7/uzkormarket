@@ -27,3 +27,8 @@ Thumbs.db
 
 # misc
 coverage/
+
+# Next.js
+.next/
+out/
+tsconfig.tsbuildinfo
