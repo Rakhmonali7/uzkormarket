@@ -75,7 +75,7 @@ export function ProductCard({ product, className, style }: ProductCardProps) {
             </span>
           )}
           {discountPct > 0 && (
-            <span className="rounded-lg bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-brand">
+            <span className="rounded-lg bg-[#1C1C1E] px-2 py-0.5 text-[10px] font-bold text-white shadow-brand">
               −{discountPct}%
             </span>
           )}

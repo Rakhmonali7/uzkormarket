@@ -57,6 +57,19 @@ export const FEATURES = {
   bnpl:            false,  // Phase 3
 } as const
 
+// ─── Order status labels ──────────────────────────────────────────────────────
+export const ORDER_STATUS = {
+  pending:           { uz: "Kutilmoqda",          ru: 'Ожидание',         ko: '대기중'    },
+  payment_confirmed: { uz: "To'lov tasdiqlandi",  ru: 'Оплата подтверждена', ko: '결제완료' },
+  processing:        { uz: "Jarayonda",            ru: 'В обработке',      ko: '처리중'    },
+  packed:            { uz: "Qadoqlandi",           ru: 'Упакован',         ko: '포장완료'  },
+  shipped:           { uz: "Yoʻlda",              ru: 'Отправлен',        ko: '배송중'    },
+  out_for_delivery:  { uz: "Yetkazilmoqda",        ru: 'В пути',           ko: '배달중'    },
+  delivered:         { uz: "Yetkazildi",           ru: 'Доставлен',        ko: '배달완료'  },
+  cancelled:         { uz: "Bekor qilindi",        ru: 'Отменён',          ko: '취소됨'    },
+  returned:          { uz: "Qaytarildi",           ru: 'Возврат',          ko: '반품됨'    },
+} as const
+
 // ─── API ──────────────────────────────────────────────────────────────────────
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api'
 export const USE_REAL_API  = process.env.NEXT_PUBLIC_USE_REAL_API === 'true'

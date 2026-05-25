@@ -73,9 +73,9 @@ export function Header() {
     )}>
 
       {/* ── Announcement bar ────────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-brand-500 to-cobalt-500 text-white">
-        <div className="container-main flex h-8 items-center justify-center text-xs font-medium">
-          <p>🚚 Free shipping on orders over 500,000 UZS · Korea ↔ Uzbekistan</p>
+      <div className="bg-[#1C1C1E] text-white/70">
+        <div className="container-main flex h-8 items-center justify-center text-xs font-medium tracking-wide">
+          <p>🚚 Free shipping on orders over 500,000 UZS &nbsp;·&nbsp; Korea ↔ Uzbekistan</p>
         </div>
       </div>
 
@@ -85,9 +85,9 @@ export function Header() {
 
           {/* Logo */}
           <Link href={ROUTES.home} className="flex-shrink-0 flex items-center gap-2.5 group">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-white font-bold text-base shadow-brand overflow-hidden">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1C1E] text-white font-bold text-base shadow-brand overflow-hidden">
               K
-              <div className="absolute inset-0 bg-gradient-glass opacity-20" />
+              <div className="absolute inset-0 bg-gradient-glass opacity-10" />
             </div>
             <span className="font-display text-lg font-bold text-zinc-900 dark:text-white hidden sm:block">
               KorUz<span className="text-gradient-brand">Market</span>
@@ -206,7 +206,7 @@ export function Header() {
               {cartCount > 0 && (
                 <span className={cn(
                   'absolute -right-0.5 -top-0.5 flex h-4.5 w-4.5 min-w-[18px] items-center justify-center',
-                  'rounded-full bg-brand-500 text-[10px] font-bold text-white shadow-brand',
+                  'rounded-full bg-[#1C1C1E] text-[10px] font-bold text-white shadow-brand',
                   'animate-bounce-subtle'
                 )}>
                   {cartCount > 9 ? '9+' : cartCount}

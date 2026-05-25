@@ -54,7 +54,7 @@ export default function ProductDetailPage() {
   const inCart        = hasItem(product.id)
 
   function handleAddToCart() {
-    addItem(product, qty)
+    addItem(product!, qty)
     setCartOpen(true)
     toast.success(`Savatga qo'shildi!`)
   }

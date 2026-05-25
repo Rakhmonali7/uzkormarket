@@ -29,7 +29,7 @@ export function getCurrency(locale: Locale): Currency {
 }
 
 // ─── Date utilities ───────────────────────────────────────────────────────────
-const LOCALE_MAP: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', ko: 'ko-KR' }
+const LOCALE_MAP: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', ko: 'ko-KR', en: 'en-US' }
 
 export function formatDate(iso: string, locale: Locale = 'uz'): string {
   return new Date(iso).toLocaleDateString(LOCALE_MAP[locale], {

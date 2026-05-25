@@ -14,7 +14,7 @@ export function Hero() {
       <div className="gl rounded-[28px] p-12 sm:p-14 relative">
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 gl-pill px-4 py-2 mb-6">
-          <div className="w-2 h-2 rounded-full bg-brand-500 animate-glow-pulse" />
+          <div className="w-2 h-2 rounded-full bg-cobalt-500 animate-glow-pulse" />
           <span className="text-xs font-semibold text-zinc-500">Authentic Korean Products · Delivered to Uzbekistan</span>
         </div>
 
@@ -57,25 +57,17 @@ export function Hero() {
 export function PromoBanner() {
   return (
     <section className="container-main">
-      <div className="rounded-3xl px-8 py-7 flex items-center gap-6 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(228,0,43,0.80) 0%, rgba(0,52,162,0.86) 100%)',
-          backdropFilter: 'blur(32px) saturate(3)',
-          border: '1px solid rgba(255,255,255,0.22)',
-          boxShadow: '0 0 0 0.5px rgba(255,255,255,0.18), 0 16px 48px rgba(228,0,43,0.20), inset 0 1px 0 rgba(255,255,255,0.30)',
-        }}>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.14) 0%,transparent 55%)', pointerEvents: 'none' }} />
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.65) 40%,rgba(255,255,255,0.65) 60%,transparent)' }} />
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[88px] opacity-[0.07] pointer-events-none select-none">🇰🇷</div>
+      <div className="gl-dark rounded-3xl px-8 py-7 flex items-center gap-6">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-[88px] opacity-[0.04] pointer-events-none select-none">🎁</div>
 
-        <span className="text-4xl relative z-10" style={{ filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.25))' }}>🎁</span>
+        <span className="text-4xl relative z-10" style={{ filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.40))' }}>🎁</span>
         <div className="flex-1 relative z-10">
           <h3 className="font-display text-xl font-bold text-white mb-1">Welcome Offer — 10% Off First Order</h3>
-          <p className="text-sm text-white/70">Use code <strong className="text-white font-bold">WELCOME10</strong> at checkout on any Korean product</p>
+          <p className="text-sm text-white/55">Use code <strong className="text-white/90 font-bold">WELCOME10</strong> at checkout on any Korean product</p>
         </div>
         <button
-          className="flex-shrink-0 h-10 px-5 rounded-full flex items-center gap-2 text-sm font-bold text-white transition-all relative z-10"
-          style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.30)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.30)' }}>
+          className="flex-shrink-0 h-10 px-5 rounded-full flex items-center gap-2 text-sm font-semibold text-white/90 transition-all hover:text-white relative z-10"
+          style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.16)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14)' }}>
           Claim Offer <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -86,8 +78,8 @@ export function PromoBanner() {
 // ─── Trust Bar ─────────────────────────────────────────────────────────────────
 export function TrustBar() {
   const items = [
-    { icon: ShieldCheck, label: 'Verified Korean Sellers', sub: 'Every seller is reviewed',  color: 'text-brand-500' },
-    { icon: Truck,       label: '7–14 Day Delivery',       sub: 'Door-to-door to Uzbekistan', color: 'text-blue-600' },
+    { icon: ShieldCheck, label: 'Verified Korean Sellers', sub: 'Every seller is reviewed',  color: 'text-brand-600' },
+    { icon: Truck,       label: '7–14 Day Delivery',       sub: 'Door-to-door to Uzbekistan', color: 'text-cobalt-500' },
     { icon: ShieldCheck, label: 'Unired Secure Payment',   sub: 'Safe checkout guaranteed',  color: 'text-emerald-500' },
     { icon: RotateCcw,   label: '14-Day Returns',          sub: 'Hassle-free returns',        color: 'text-amber-500' },
   ]
@@ -150,7 +142,7 @@ export function FeaturedSection() {
     <section className="container-main">
       <div className="flex items-baseline justify-between mb-5">
         <h2 className="font-display text-2xl font-bold text-zinc-900">Featured Korean Products</h2>
-        <Link href={ROUTES.products} className="text-sm font-bold text-brand-500 hover:text-brand-600 transition-colors flex items-center gap-1">
+        <Link href={ROUTES.products} className="text-sm font-bold text-cobalt-500 hover:text-cobalt-600 transition-colors flex items-center gap-1">
           View all <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -163,27 +155,18 @@ export function FeaturedSection() {
 export function SellerCTA() {
   return (
     <section className="container-main">
-      <div className="rounded-[26px] px-10 py-12 text-center relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(228,0,43,0.78) 0%, rgba(0,52,162,0.84) 100%)',
-          backdropFilter: 'blur(32px) saturate(3)',
-          border: '1px solid rgba(255,255,255,0.22)',
-          boxShadow: '0 0 0 0.5px rgba(255,255,255,0.18), 0 24px 70px rgba(228,0,43,0.18), inset 0 1px 0 rgba(255,255,255,0.28)',
-        }}>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.14) 0%,transparent 55%)', pointerEvents: 'none' }} />
-        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.68) 40%,rgba(255,255,255,0.68) 60%,transparent)' }} />
-
+      <div className="gl-dark rounded-[26px] px-10 py-12 text-center">
         <div className="w-16 h-16 rounded-[20px] mx-auto mb-5 flex items-center justify-center text-3xl relative z-10"
-          style={{ background: 'rgba(255,255,255,0.16)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.26)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.32)' }}>
+          style={{ background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.14)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14)' }}>
           🏪
         </div>
         <h2 className="font-display text-[32px] font-bold text-white mb-3 relative z-10">Sell Your Korean Products Here</h2>
-        <p className="text-sm text-white/65 max-w-[340px] mx-auto mb-6 leading-relaxed relative z-10">
+        <p className="text-sm text-white/50 max-w-[340px] mx-auto mb-6 leading-relaxed relative z-10">
           Are you a Korean seller? Reach thousands of customers in Uzbekistan. List for free.
         </p>
         <Link href="/seller" className="relative z-10">
           <button className="inline-flex items-center gap-2.5 h-12 px-8 rounded-full text-[14.5px] font-bold text-zinc-900 transition-all duration-200 hover:-translate-y-0.5"
-            style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 0 0 0.5px rgba(255,255,255,0.90), 0 8px 24px rgba(0,0,0,0.18)', backdropFilter: 'blur(16px)' }}>
+            style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 0 0 0.5px rgba(255,255,255,0.90), 0 8px 24px rgba(0,0,0,0.22)', backdropFilter: 'blur(16px)' }}>
             Open Your Store <ArrowRight className="h-4 w-4" />
           </button>
         </Link>

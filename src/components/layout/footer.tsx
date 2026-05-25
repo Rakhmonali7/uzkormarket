@@ -11,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-4 lg:col-span-2">
             <Link href={ROUTES.home} className="inline-flex items-center gap-2.5 mb-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-white font-bold shadow-brand">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1C1C1E] text-white font-bold shadow-brand">
                 K
               </div>
               <span className="font-display text-lg font-bold text-zinc-900 dark:text-white">

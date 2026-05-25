@@ -62,9 +62,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-surface-950 px-4 py-10">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#F2F2F7] dark:bg-surface-950 px-4 py-10">
 
-      {/* ── Liquid background blobs ──────────────────────────────────── */}
+      {/* ── Subtle glass blobs ───────────────────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="blob-brand w-[600px] h-[600px] -top-32 -right-32 animate-float" />
         <div className="blob-cobalt w-[500px] h-[500px] -bottom-24 -left-24 animate-float" style={{ animationDelay: '2s' }} />
@@ -76,9 +76,9 @@ export default function AuthPage() {
         {/* ── Logo ──────────────────────────────────────────────────── */}
         <div className="mb-8 text-center animate-fade-up">
           <Link href={ROUTES.home} className="inline-flex items-center gap-3 group">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-white font-bold text-xl shadow-brand">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1C1C1E] text-white font-bold text-xl shadow-brand">
               K
-              <div className="absolute inset-0 rounded-2xl bg-gradient-glass" />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-glass opacity-10" />
             </div>
             <div className="text-left">
               <div className="font-display text-2xl font-bold text-zinc-900 dark:text-white leading-tight">
@@ -92,7 +92,7 @@ export default function AuthPage() {
         {/* ── Card ──────────────────────────────────────────────────── */}
         <div
           className="card-glass p-8 animate-fade-up"
-          style={{ animationDelay: '60ms' }}
+          style={{ animationDelay: '60ms', borderRadius: '24px' }}
         >
           {/* Mode toggle */}
           {mode !== 'forgot' && (

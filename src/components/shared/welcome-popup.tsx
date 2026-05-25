@@ -38,23 +38,23 @@ export function WelcomePopup() {
 
         {/* Banner */}
         <div className="relative h-48 overflow-hidden flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, #E4002B 0%, #0052A2 100%)' }}>
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.18) 0%,transparent 60%)' }} />
-          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.7) 50%,transparent)' }} />
-          <div className="relative z-10 flex items-center gap-5 text-5xl" style={{ filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.25))' }}>
+          style={{ background: 'rgba(18,18,20,0.94)', backdropFilter: 'blur(32px)' }}>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg,rgba(255,255,255,0.07) 0%,transparent 60%)' }} />
+          <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.30) 50%,transparent)' }} />
+          <div className="relative z-10 flex items-center gap-5 text-5xl" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.50))' }}>
             <span>🇰🇷</span>
-            <span style={{ fontSize: 28, color: 'rgba(255,255,255,0.7)' }}>→</span>
+            <span style={{ fontSize: 28, color: 'rgba(255,255,255,0.40)' }}>→</span>
             <span>🇺🇿</span>
           </div>
           {/* Limited time badge */}
-          <div className="absolute top-4 right-4 rounded-full px-3 py-1.5 text-[11px] font-bold text-white"
-            style={{ background: 'rgba(255,255,255,0.20)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.30)' }}>
-            🔥 Limited Time
+          <div className="absolute top-4 right-4 rounded-full px-3 py-1.5 text-[11px] font-bold text-white/80"
+            style={{ background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.14)' }}>
+            Limited Time
           </div>
           {/* Close button */}
           <button onClick={close}
-            className="absolute top-4 left-4 w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
-            style={{ background: 'rgba(0,0,0,0.20)', backdropFilter: 'blur(8px)' }}>
+            className="absolute top-4 left-4 w-8 h-8 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
+            style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.10)' }}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -63,9 +63,9 @@ export function WelcomePopup() {
         <div className="p-8">
           {/* Tag */}
           <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 mb-4"
-            style={{ background: 'rgba(228,0,43,0.08)', border: '1px solid rgba(228,0,43,0.15)' }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-glow-pulse" />
-            <span className="text-[11.5px] font-bold text-brand-600">Special Welcome Offer</span>
+            style={{ background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)' }}>
+            <div className="w-1.5 h-1.5 rounded-full bg-cobalt-500 animate-glow-pulse" />
+            <span className="text-[11.5px] font-bold text-cobalt-600">Special Welcome Offer</span>
           </div>
 
           <h2 className="font-display text-[26px] font-bold text-zinc-900 leading-tight mb-3">

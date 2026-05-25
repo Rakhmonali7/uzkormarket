@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,7 +18,15 @@ const SORT_OPTIONS = [
   { value: 'rating',     label: 'Reyting'          },
 ] as const
 
-export default function ProductsPage() {
+export default function ProductsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="container-main py-20 flex justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-brand-600" /></div>}>
+      <ProductsPage />
+    </Suspense>
+  )
+}
+
+function ProductsPage() {
   const router      = useRouter()
   const pathname    = usePathname()
   const sp          = useSearchParams()
