@@ -1,10 +1,7 @@
 /**
- * API Client
- * ──────────────────────────────────────────────────────────────────────────────
- * Currently uses local mock data.
- * To connect to a real backend: set NEXT_PUBLIC_USE_REAL_API=true in .env.local
- * All function signatures remain identical — only the implementation swaps.
- * ──────────────────────────────────────────────────────────────────────────────
+ * API Client — connects to uzkormarket-backend
+ * Backend base URL: process.env.NEXT_PUBLIC_API_URL (default: /api)
+ * Set NEXT_PUBLIC_USE_REAL_API=true to use real backend
  */
 
 import type {
@@ -17,33 +14,100 @@ import {
   getByOrigin, getByCategory,
 } from './mock-data'
 
+// ─── Auth header helper ───────────────────────────────────────────────────────
+function authHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const stored = localStorage.getItem('kum-auth')
+    const token  = stored ? JSON.parse(stored)?.state?.token : null
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch { return {} }
+}
+
 // ─── Base fetch wrapper ───────────────────────────────────────────────────────
-async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+async function apiFetch<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<ApiResponse<T>> {
   try {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+        ...((options?.headers as Record<string, string>) ?? {}),
+      },
       ...options,
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       return { success: false, error: err.message ?? `HTTP ${res.status}` }
     }
-    return { success: true, data: await res.json() }
+    const data = await res.json()
+    return { success: true, data }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : 'Network error' }
   }
 }
 
-// Simulate realistic async delay in mock mode
 const delay = <T>(data: T, ms = 350): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(data), ms))
 
+// ─── Auth API ─────────────────────────────────────────────────────────────────
+export const authApi = {
+  /** POST /auth/register */
+  async register(data: { name: string; email: string; password: string }): Promise<ApiResponse<{ token: string; user: User }>> {
+    if (USE_REAL_API) return apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) })
+    const user: User = {
+      id: `user-${Date.now()}`, name: data.name,
+      phone: '', email: data.email,
+      locale: 'uz', createdAt: new Date().toISOString(),
+    }
+    return delay({ success: true, data: { token: 'mock-jwt-' + Date.now(), user } }, 700)
+  },
+
+  /** POST /auth/login */
+  async login(data: { email: string; password: string }): Promise<ApiResponse<{ token: string; user: User }>> {
+    if (USE_REAL_API) return apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) })
+    const user: User = {
+      id: 'user-me', name: data.email.split('@')[0],
+      phone: '', email: data.email,
+      locale: 'uz', createdAt: new Date().toISOString(),
+    }
+    return delay({ success: true, data: { token: 'mock-jwt-' + Date.now(), user } }, 600)
+  },
+
+  /** POST /auth/otp/request */
+  async requestOTP(phone: string): Promise<ApiResponse<void>> {
+    if (USE_REAL_API) return apiFetch('/auth/otp/request', { method: 'POST', body: JSON.stringify({ phone }) })
+    return delay({ success: true })
+  },
+
+  /** POST /auth/otp/verify */
+  async verifyOTP(phone: string, code: string): Promise<ApiResponse<{ token: string; user: User }>> {
+    if (USE_REAL_API) return apiFetch('/auth/otp/verify', { method: 'POST', body: JSON.stringify({ phone, code }) })
+    const user: User = {
+      id: 'user-me', name: 'User', phone,
+      locale: 'uz', createdAt: new Date().toISOString(),
+    }
+    return delay({ success: true, data: { token: 'mock-jwt', user } })
+  },
+
+  /** POST /auth/logout */
+  async logout(): Promise<ApiResponse<void>> {
+    if (USE_REAL_API) return apiFetch('/auth/logout', { method: 'POST' })
+    return delay({ success: true })
+  },
+
+  /** GET /auth/me */
+  async me(): Promise<ApiResponse<User>> {
+    if (USE_REAL_API) return apiFetch('/auth/me')
+    return delay({ success: false, error: 'Not authenticated' })
+  },
+}
+
 // ─── Products API ─────────────────────────────────────────────────────────────
 export const productsApi = {
-  /**
-   * List & filter products.
-   * Backend: GET /products?category=...&origin=...&page=...
-   */
+  /** GET /products?category=...&origin=...&page=... */
   async list(filters: ProductFilters = {}): Promise<PaginatedResponse<Product>> {
     if (USE_REAL_API) {
       const params = new URLSearchParams(
@@ -55,9 +119,7 @@ export const productsApi = {
       return res.data!
     }
 
-    // ── Mock filtering ──────────────────────────────────────────────────────
     let results = [...PRODUCTS]
-
     if (filters.category)  results = results.filter(p => p.category === filters.category)
     if (filters.origin)    results = results.filter(p => p.origin   === filters.origin)
     if (filters.inStock)   results = results.filter(p => p.stockQty  > 0)
@@ -92,7 +154,7 @@ export const productsApi = {
     })
   },
 
-  /** Backend: GET /products/:slug */
+  /** GET /products/:slug */
   async getBySlug(slug: string): Promise<Product | null> {
     if (USE_REAL_API) {
       const res = await apiFetch<Product>(`/products/${slug}`)
@@ -101,7 +163,7 @@ export const productsApi = {
     return delay(getProductBySlug(slug))
   },
 
-  /** Backend: GET /products?featured=true */
+  /** GET /products?featured=true */
   async getFeatured(): Promise<Product[]> {
     if (USE_REAL_API) {
       const res = await apiFetch<Product[]>('/products?featured=true')
@@ -110,7 +172,7 @@ export const productsApi = {
     return delay(getFeatured())
   },
 
-  /** Backend: GET /products?new=true */
+  /** GET /products?new=true */
   async getNew(): Promise<Product[]> {
     if (USE_REAL_API) {
       const res = await apiFetch<Product[]>('/products?new=true')
@@ -119,7 +181,7 @@ export const productsApi = {
     return delay(getNewArrivals(), 280)
   },
 
-  /** Backend: GET /products?origin=KR|UZ */
+  /** GET /products?origin=KR|UZ */
   async getByOrigin(origin: 'KR' | 'UZ'): Promise<Product[]> {
     if (USE_REAL_API) {
       const res = await apiFetch<Product[]>(`/products?origin=${origin}`)
@@ -128,7 +190,7 @@ export const productsApi = {
     return delay(getByOrigin(origin))
   },
 
-  /** Search autocomplete. Backend: GET /products/suggest?q=... */
+  /** GET /products/suggest?q=... */
   async suggest(query: string): Promise<string[]> {
     if (!query.trim()) return []
     if (USE_REAL_API) {
@@ -137,21 +199,27 @@ export const productsApi = {
     }
     const q = query.toLowerCase()
     return delay(
-      PRODUCTS
-        .filter(p =>
-          p.title.uz.toLowerCase().includes(q) ||
-          p.title.ru.toLowerCase().includes(q)
-        )
-        .slice(0, 6)
-        .map(p => p.title.uz),
+      PRODUCTS.filter(p =>
+        p.title.uz.toLowerCase().includes(q) || p.title.ru.toLowerCase().includes(q)
+      ).slice(0, 6).map(p => p.title.uz),
       180
     )
+  },
+
+  /** GET /products/categories */
+  async getCategories(): Promise<string[]> {
+    if (USE_REAL_API) {
+      const res = await apiFetch<string[]>('/products/categories')
+      return res.data ?? []
+    }
+    const cats = Array.from(new Set(PRODUCTS.map(p => p.category)))
+    return delay(cats)
   },
 }
 
 // ─── Reviews API ──────────────────────────────────────────────────────────────
 export const reviewsApi = {
-  /** Backend: GET /products/:id/reviews */
+  /** GET /products/:id/reviews */
   async getForProduct(productId: string): Promise<Review[]> {
     if (USE_REAL_API) {
       const res = await apiFetch<Review[]>(`/products/${productId}/reviews`)
@@ -161,31 +229,52 @@ export const reviewsApi = {
       {
         id: 'r1', productId, userId: 'u1',
         userName: 'Aziza T.', rating: 5,
-        body: "Juda ajoyib mahsulot! Tezda yetib keldi, sifati a'lo.",
+        body: "Juda ajoyib mahsulot! Tezda yetib keldi, sifati a'lo darajada. Qayta buyurtma beraman!",
         verifiedPurchase: true, helpful: 14,
         createdAt: '2024-03-15T10:00:00Z',
       },
       {
         id: 'r2', productId, userId: 'u2',
         userName: 'Sardor M.', rating: 4,
-        body: "Yaxshi mahsulot, qadoqlash biroz shikastlangan edi. Umuman olganda mamnunman.",
+        body: "Yaxshi mahsulot, qadoqlash biroz shikastlangan edi lekin mahsulot o'zi yaxshi. Umuman olganda mamnunman.",
         verifiedPurchase: true, helpful: 6,
         createdAt: '2024-03-20T14:30:00Z',
       },
       {
         id: 'r3', productId, userId: 'u3',
         userName: '김민준', rating: 5,
-        body: "정말 좋은 제품이에요! 빨리 배송되었고 품질도 최상급입니다.",
+        body: "정말 좋은 제품이에요! 배송도 빠르고 품질도 최상급입니다. 다시 구매할 예정입니다.",
         verifiedPurchase: true, helpful: 9,
         createdAt: '2024-04-02T09:00:00Z',
       },
+      {
+        id: 'r4', productId, userId: 'u4',
+        userName: 'Malika R.', rating: 4,
+        body: "Sifati kutganimdan ham yaxshi chiqdi. Narxi biroz qimmat lekin arziydigan mahsulot.",
+        verifiedPurchase: false, helpful: 3,
+        createdAt: '2024-04-10T11:00:00Z',
+      },
     ])
+  },
+
+  /** POST /products/:id/reviews */
+  async create(productId: string, data: { rating: number; body: string }): Promise<ApiResponse<Review>> {
+    if (USE_REAL_API) {
+      return apiFetch(`/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify(data) })
+    }
+    const review: Review = {
+      id: `r-${Date.now()}`, productId, userId: 'user-me',
+      userName: 'You', rating: data.rating as 1|2|3|4|5,
+      body: data.body, verifiedPurchase: false, helpful: 0,
+      createdAt: new Date().toISOString(),
+    }
+    return delay({ success: true, data: review }, 500)
   },
 }
 
 // ─── Orders API ───────────────────────────────────────────────────────────────
 export const ordersApi = {
-  /** Backend: POST /orders */
+  /** POST /orders */
   async create(data: Partial<Order>): Promise<ApiResponse<Order>> {
     if (USE_REAL_API) {
       return apiFetch<Order>('/orders', { method: 'POST', body: JSON.stringify(data) })
@@ -199,10 +288,10 @@ export const ordersApi = {
       subtotal: 0, deliveryFee: 0, discount: 0, total: 0,
       ...data,
     } as Order
-    return delay({ success: true, data: order }, 800)
+    return delay({ success: true, data: order }, 900)
   },
 
-  /** Backend: GET /orders/me */
+  /** GET /orders/me */
   async getMyOrders(): Promise<Order[]> {
     if (USE_REAL_API) {
       const res = await apiFetch<Order[]>('/orders/me')
@@ -210,28 +299,52 @@ export const ordersApi = {
     }
     return delay<Order[]>([])
   },
+
+  /** GET /orders/:id */
+  async getById(id: string): Promise<ApiResponse<Order>> {
+    if (USE_REAL_API) return apiFetch<Order>(`/orders/${id}`)
+    return delay({ success: false, error: 'Not found' })
+  },
+
+  /** PATCH /orders/:id/cancel */
+  async cancel(id: string): Promise<ApiResponse<Order>> {
+    if (USE_REAL_API) return apiFetch<Order>(`/orders/${id}/cancel`, { method: 'PATCH' })
+    return delay({ success: true })
+  },
 }
 
-// ─── Auth API ─────────────────────────────────────────────────────────────────
-export const authApi = {
-  /** Backend: POST /auth/otp/request */
-  async requestOTP(phone: string): Promise<ApiResponse<void>> {
+// ─── Sellers API ──────────────────────────────────────────────────────────────
+export const sellersApi = {
+  /** POST /sellers/apply */
+  async apply(data: {
+    businessName: string; email: string; phone: string;
+    country: 'KR' | 'UZ'; description?: string
+  }): Promise<ApiResponse<{ applicationId: string }>> {
+    if (USE_REAL_API) return apiFetch('/sellers/apply', { method: 'POST', body: JSON.stringify(data) })
+    return delay({ success: true, data: { applicationId: `APP-${Date.now().toString(36).toUpperCase()}` } }, 800)
+  },
+}
+
+// ─── Wishlist API ─────────────────────────────────────────────────────────────
+export const wishlistApi = {
+  /** GET /wishlist */
+  async get(): Promise<Product[]> {
     if (USE_REAL_API) {
-      return apiFetch('/auth/otp/request', { method: 'POST', body: JSON.stringify({ phone }) })
+      const res = await apiFetch<Product[]>('/wishlist')
+      return res.data ?? []
     }
-    console.log('[mock] OTP sent to', phone)
+    return delay<Product[]>([])
+  },
+
+  /** POST /wishlist/:productId */
+  async add(productId: string): Promise<ApiResponse<void>> {
+    if (USE_REAL_API) return apiFetch(`/wishlist/${productId}`, { method: 'POST' })
     return delay({ success: true })
   },
 
-  /** Backend: POST /auth/otp/verify */
-  async verifyOTP(phone: string, code: string): Promise<ApiResponse<{ token: string; user: User }>> {
-    if (USE_REAL_API) {
-      return apiFetch('/auth/otp/verify', { method: 'POST', body: JSON.stringify({ phone, code }) })
-    }
-    const user: User = {
-      id: 'user-me', name: 'Test User', phone,
-      locale: 'uz', createdAt: new Date().toISOString(),
-    }
-    return delay({ success: true, data: { token: 'mock-jwt', user } })
+  /** DELETE /wishlist/:productId */
+  async remove(productId: string): Promise<ApiResponse<void>> {
+    if (USE_REAL_API) return apiFetch(`/wishlist/${productId}`, { method: 'DELETE' })
+    return delay({ success: true })
   },
 }

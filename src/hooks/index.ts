@@ -1,8 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useUIStore } from '@/store'
-import { LOCALES, CATEGORIES } from '@/config'
+import { CATEGORIES } from '@/config'
 import { productsApi } from '@/lib/api/client'
 import type { LocalizedString, Locale, ProductFilters } from '@/types'
+
+const LOCALES = [
+  { value: 'uz' as Locale, label: "O'zbek",  flag: '🇺🇿' },
+  { value: 'ru' as Locale, label: 'Русский',  flag: '🇷🇺' },
+  { value: 'ko' as Locale, label: '한국어',   flag: '🇰🇷' },
+]
 
 // ─── useLocale ────────────────────────────────────────────────────────────────
 export function useLocale() {

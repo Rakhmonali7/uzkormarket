@@ -19,11 +19,11 @@ export const ROUTES = {
 
 // ─── Locales ──────────────────────────────────────────────────────────────────
 export const LOCALES = [
-  { value: 'en' as Locale, label: 'English', flag: '🌐' },
   { value: 'uz' as Locale, label: "O'zbek",  flag: '🇺🇿' },
+  { value: 'ru' as Locale, label: 'Русский',  flag: '🇷🇺' },
   { value: 'ko' as Locale, label: '한국어',   flag: '🇰🇷' },
 ]
-export const DEFAULT_LOCALE: Locale = 'en'
+export const DEFAULT_LOCALE: Locale = 'uz'
 
 // ─── Categories (with English labels) ────────────────────────────────────────
 export const CATEGORIES: {

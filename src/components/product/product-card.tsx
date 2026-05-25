@@ -2,9 +2,9 @@
 
 import Image from 'next/image'
 import Link  from 'next/link'
-import { Heart, ShoppingCart, Zap } from 'lucide-react'
+import { Heart, ShoppingCart, Zap, Star } from 'lucide-react'
 import { cn, formatPrice, getProductPrice, getCurrency } from '@/lib/utils'
-import { Badge, OriginBadge, Rating } from '@/components/ui'
+import { OriginBadge } from '@/components/ui'
 import { useCartStore } from '@/store'
 import { useLocale }    from '@/hooks'
 import { ROUTES }       from '@/config'
@@ -40,66 +40,65 @@ export function ProductCard({ product, className, style }: ProductCardProps) {
   return (
     <Link
       href={ROUTES.product(product.slug)}
-      className={cn(
-        'group relative flex flex-col overflow-hidden rounded-2xl',
-        'bg-white dark:bg-zinc-900',
-        'border border-zinc-100 dark:border-zinc-800',
-        'transition-all duration-300',
-        'hover:-translate-y-1.5 hover:shadow-card-lg hover:border-zinc-200 dark:hover:border-zinc-700',
-        className
-      )}
+      className={cn('product-card group rounded-[22px] flex flex-col', className)}
       style={style}
     >
-      {/* ── Image area ─────────────────────────────────────────────────── */}
-      <div className="relative aspect-product w-full overflow-hidden bg-zinc-50 dark:bg-zinc-800">
+      {/* ── Image ─────────────────────────────────────────────────────────── */}
+      <div className="relative aspect-product w-full overflow-hidden rounded-t-[22px] bg-zinc-100">
         {primaryImg ? (
           <Image
             src={primaryImg.url}
             alt={primaryImg.altText}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.07]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-5xl text-zinc-200 dark:text-zinc-700">📦</div>
+          <div className="flex h-full items-center justify-center text-5xl text-zinc-200">📦</div>
         )}
 
-        {/* Gradient overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/24 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Badges top-left */}
+        {/* Badges */}
         <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
           {product.isNew && (
-            <span className="rounded-lg bg-cobalt-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-cobalt">
+            <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+              style={{ background: 'linear-gradient(135deg,#007AFF,#0052A2)', boxShadow: '0 3px 10px rgba(0,82,162,0.38)' }}>
               NEW
             </span>
           )}
           {discountPct > 0 && (
-            <span className="rounded-lg bg-brand-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-brand">
+            <span className="rounded-lg px-2 py-0.5 text-[10px] font-bold text-white"
+              style={{ background: 'linear-gradient(135deg,#E4002B,#b8001f)', boxShadow: '0 3px 10px rgba(228,0,43,0.38)' }}>
               −{discountPct}%
             </span>
           )}
         </div>
 
-        {/* Wishlist top-right */}
+        {/* Wishlist */}
         <button
           onClick={e => { e.preventDefault(); e.stopPropagation() }}
           aria-label="Save to wishlist"
           className={cn(
             'absolute right-2.5 top-2.5',
             'flex h-8 w-8 items-center justify-center rounded-full',
-            'bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm',
-            'text-zinc-400 hover:text-brand-500 dark:hover:text-brand-400',
             'opacity-0 group-hover:opacity-100',
-            'transition-all duration-200 hover:scale-110 shadow-soft'
+            'transition-all duration-200 hover:scale-110',
           )}
+          style={{
+            background: 'rgba(255,255,255,0.88)',
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,1)',
+            border: '1px solid rgba(255,255,255,0.90)',
+          }}
         >
-          <Heart className="h-4 w-4" />
+          <Heart className="h-3.5 w-3.5 text-zinc-500 hover:text-red-500 transition-colors" />
         </button>
 
-        {/* Quick add — slides up */}
+        {/* Quick-add — slides up on hover */}
         <div className={cn(
-          'absolute inset-x-2 bottom-2',
+          'absolute inset-x-2.5 bottom-2.5',
           'translate-y-full group-hover:translate-y-0',
           'transition-transform duration-300 ease-out'
         )}>
@@ -108,39 +107,46 @@ export function ProductCard({ product, className, style }: ProductCardProps) {
             className={cn(
               'flex w-full items-center justify-center gap-2',
               'rounded-xl py-2.5 text-sm font-bold',
-              'backdrop-blur-sm transition-all duration-150',
-              'active:scale-95',
+              'transition-all duration-150 active:scale-95',
               inCart
-                ? 'bg-emerald-500/95 text-white shadow-sm'
-                : 'bg-white/95 text-zinc-900 hover:bg-white shadow-glass dark:bg-zinc-900/95 dark:text-white dark:hover:bg-zinc-900'
+                ? 'text-white'
+                : 'text-zinc-900',
             )}
+            style={{
+              background: inCart
+                ? 'linear-gradient(135deg,#10b981,#059669)'
+                : 'rgba(255,255,255,0.94)',
+              backdropFilter: 'blur(16px)',
+              boxShadow: inCart
+                ? '0 4px 14px rgba(16,185,129,0.40)'
+                : '0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,1)',
+            }}
           >
             {inCart
-              ? <><Zap className="h-4 w-4" /> In Cart ✓</>
-              : <><ShoppingCart className="h-4 w-4" /> Add to Cart</>
+              ? <><Zap className="h-3.5 w-3.5" /> In Cart ✓</>
+              : <><ShoppingCart className="h-3.5 w-3.5" /> Add to Cart</>
             }
           </button>
         </div>
       </div>
 
-      {/* ── Product info ────────────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col gap-2 p-3.5">
+      {/* ── Info ──────────────────────────────────────────────────────────── */}
+      <div className="flex flex-1 flex-col gap-2 p-3.5 pt-3">
         <div className="flex items-center justify-between gap-1">
           <OriginBadge origin={product.origin} />
-          <Rating value={product.rating} size="sm" />
+          <div className="flex items-center gap-0.5">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span className="text-[11px] font-semibold text-zinc-500">{product.rating}</span>
+          </div>
         </div>
 
-        <p className="clamp-2 text-sm font-medium leading-snug text-zinc-800 dark:text-zinc-200 min-h-[2.5rem] group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+        <p className="clamp-2 text-sm font-medium leading-snug text-zinc-800 min-h-[2.5rem] group-hover:text-zinc-900 transition-colors">
           {t(product.title)}
         </p>
 
         <div className="mt-auto flex items-end justify-between gap-2">
           <div>
-            <div className={cn(
-              'font-bold text-base',
-              'text-zinc-900 dark:text-zinc-50',
-              'group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors'
-            )}>
+            <div className="font-bold text-base text-zinc-900 group-hover:text-brand-600 transition-colors">
               {formatPrice(price, currency, locale)}
             </div>
             {original && original > price && (
@@ -150,7 +156,8 @@ export function ProductCard({ product, className, style }: ProductCardProps) {
             )}
           </div>
           {product.soldCount > 50 && (
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap bg-zinc-50 dark:bg-zinc-800 rounded-md px-1.5 py-0.5">
+            <span className="text-[10.5px] text-zinc-400 whitespace-nowrap rounded-lg px-1.5 py-0.5"
+              style={{ background: 'rgba(255,255,255,0.60)', backdropFilter: 'blur(8px)', border: '1px solid rgba(0,0,0,0.05)' }}>
               {product.soldCount.toLocaleString()}+ sold
             </span>
           )}

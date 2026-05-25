@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Sparkles, ArrowRight } from 'lucide-react'
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, ArrowRight, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store'
+import { authApi } from '@/lib/api/client'
 import { ROUTES } from '@/config'
 import toast from 'react-hot-toast'
 
@@ -19,6 +20,7 @@ export default function AuthPage() {
   const [showPass,    setShowPass]    = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading,     setLoading]     = useState(false)
+  const [done,        setDone]        = useState(false)
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
@@ -33,232 +35,212 @@ export default function AuthPage() {
     try {
       if (mode === 'register') {
         if (password !== confirm) { toast.error('Passwords do not match'); return }
-        if (password.length < 6) { toast.error('Password must be at least 6 characters'); return }
-        // TODO: connect to backend /api/auth/register
-        // const res = await fetch('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) })
-        toast.success('Account created! Please check your email to verify.')
-        setMode('login')
+        if (password.length < 6)  { toast.error('Password must be at least 6 characters'); return }
+        const res = await authApi.register({ name, email, password })
+        if (!res.success) { toast.error(res.error ?? 'Registration failed'); return }
+        setAuth(res.data!.user, res.data!.token)
+        toast.success('Account created! Welcome 🎉')
+        router.push(ROUTES.home)
       } else if (mode === 'login') {
-        // TODO: connect to backend /api/auth/login
-        // const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
-        // Mock success for now:
-        setAuth({ id: '1', email, name: email.split('@')[0], role: 'buyer', isVerified: true } as any, 'mock-token')
+        const res = await authApi.login({ email, password })
+        if (!res.success) { toast.error(res.error ?? 'Invalid email or password'); return }
+        setAuth(res.data!.user, res.data!.token)
         toast.success('Welcome back! 👋')
         router.push(ROUTES.home)
-      } else if (mode === 'forgot') {
-        // TODO: connect to backend /api/auth/forgot-password
-        toast.success('Reset link sent! Check your email.')
-        setMode('login')
+      } else {
+        setDone(true)
+        toast.success('Password reset link sent!')
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const titles = {
-    login:    { head: 'Welcome back',        sub:  'Sign in to your account' },
-    register: { head: 'Create account',      sub:  'Join KorUzMarket today' },
-    forgot:   { head: 'Reset password',      sub:  'We\'ll send you a reset link' },
-  }
-
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white dark:bg-surface-950 px-4 py-10">
-
-      {/* ── Liquid background blobs ──────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="blob-brand w-[600px] h-[600px] -top-32 -right-32 animate-float" />
-        <div className="blob-cobalt w-[500px] h-[500px] -bottom-24 -left-24 animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute inset-0 bg-gradient-mesh opacity-60" />
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      {/* Background blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(228,0,43,0.12) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(0,82,162,0.10) 0%, transparent 70%)', filter: 'blur(60px)' }} />
       </div>
 
-      <div className="relative w-full max-w-md">
+      <div className="w-full max-w-[420px] animate-fade-up relative z-10">
+        {/* Back link */}
+        <Link href={ROUTES.home}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-700 mb-8 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back to home
+        </Link>
 
-        {/* ── Logo ──────────────────────────────────────────────────── */}
-        <div className="mb-8 text-center animate-fade-up">
-          <Link href={ROUTES.home} className="inline-flex items-center gap-3 group">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-white font-bold text-xl shadow-brand">
-              K
-              <div className="absolute inset-0 rounded-2xl bg-gradient-glass" />
-            </div>
-            <div className="text-left">
-              <div className="font-display text-2xl font-bold text-zinc-900 dark:text-white leading-tight">
-                KorUz<span className="text-gradient-brand">Market</span>
-              </div>
-              <div className="text-[11px] text-zinc-400 font-medium tracking-wide">Korea ↔ Uzbekistan</div>
-            </div>
-          </Link>
-        </div>
+        {/* Card */}
+        <div className="rounded-[32px] overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.84)',
+            backdropFilter: 'blur(48px) saturate(2.2)',
+            border: '1px solid rgba(255,255,255,0.90)',
+            boxShadow: '0 0 0 0.5px rgba(255,255,255,0.78), 0 40px 90px rgba(0,0,0,0.13), inset 0 1.5px 0 rgba(255,255,255,1)',
+          }}>
 
-        {/* ── Card ──────────────────────────────────────────────────── */}
-        <div
-          className="card-glass p-8 animate-fade-up"
-          style={{ animationDelay: '60ms' }}
-        >
-          {/* Mode toggle */}
-          {mode !== 'forgot' && (
-            <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 mb-7">
-              {(['login', 'register'] as const).map(m => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    'flex-1 rounded-lg py-2 text-sm font-semibold transition-all duration-200',
-                    mode === m
-                      ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-soft'
-                      : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                  )}
-                >
-                  {m === 'login' ? 'Sign In' : 'Register'}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="mb-6">
-            {mode === 'forgot' && (
-              <button
-                onClick={() => setMode('login')}
-                className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors mb-4"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
-              </button>
-            )}
-            <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">
-              {titles[mode].head}
+          {/* Top banner */}
+          <div className="relative px-8 pt-8 pb-7"
+            style={{
+              background: 'linear-gradient(135deg, rgba(228,0,43,0.08) 0%, rgba(0,82,162,0.06) 100%)',
+              borderBottom: '1px solid rgba(255,255,255,0.70)',
+            }}>
+            <div className="flex items-center justify-center gap-3 text-3xl mb-4">🇰🇷 ↔ 🇺🇿</div>
+            <h1 className="font-display text-[26px] font-bold text-zinc-900 text-center leading-tight">
+              {mode === 'login'    ? 'Welcome Back'
+               : mode === 'register' ? 'Create Account'
+               : 'Reset Password'}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{titles[mode].sub}</p>
+            <p className="text-sm text-zinc-400 text-center mt-1.5">
+              {mode === 'login'    ? 'Sign in to your KorUzMarket account'
+               : mode === 'register' ? 'Join thousands of shoppers'
+               : "Enter your email and we'll send a reset link"}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <div className="px-8 py-7">
+            {done ? (
+              <div className="text-center py-6">
+                <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
+                <h3 className="font-display text-xl font-bold text-zinc-900 mb-2">Check your email</h3>
+                <p className="text-sm text-zinc-400 mb-6">We sent a password reset link to {email}</p>
+                <button onClick={() => { setDone(false); setMode('login') }}
+                  className="btn-brand h-11 px-6 w-full flex items-center justify-center gap-2 text-sm font-bold">
+                  Back to Login
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'register' && (
+                  <div>
+                    <label className="label">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                      <input
+                        type="text" value={name} onChange={e => setName(e.target.value)} required
+                        placeholder="Aziz Karimov"
+                        className="input pl-10"
+                      />
+                    </div>
+                  </div>
+                )}
 
-            {/* Full name — register only */}
-            {mode === 'register' && (
-              <div>
-                <label className="label">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                  <input
-                    type="text" value={name} onChange={e => setName(e.target.value)}
-                    placeholder="Aziza Karimova"
-                    className="input pl-10" required autoComplete="name"
-                  />
+                <div>
+                  <label className="label">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                    <input
+                      type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                      placeholder="you@example.com"
+                      className="input pl-10"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Email */}
-            <div>
-              <label className="label">Email Address</label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                <input
-                  type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="input pl-10" required autoFocus autoComplete="email"
-                />
-              </div>
-            </div>
+                {mode !== 'forgot' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="label mb-0">Password</label>
+                      {mode === 'login' && (
+                        <button type="button" onClick={() => setMode('forgot')}
+                          className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors">
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        value={password} onChange={e => setPassword(e.target.value)} required
+                        placeholder="••••••••"
+                        className="input pl-10 pr-10"
+                      />
+                      <button type="button" onClick={() => setShowPass(v => !v)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors">
+                        {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-            {/* Password — login & register */}
-            {mode !== 'forgot' && (
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="label !mb-0">Password</label>
-                  {mode === 'login' && (
-                    <button type="button" onClick={() => setMode('forgot')}
-                      className="text-xs text-brand-500 hover:text-brand-600 font-semibold transition-colors">
-                      Forgot password?
-                    </button>
+                {mode === 'register' && (
+                  <div>
+                    <label className="label">Confirm Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                      <input
+                        type={showConfirm ? 'text' : 'password'}
+                        value={confirm} onChange={e => setConfirm(e.target.value)} required
+                        placeholder="••••••••"
+                        className="input pl-10 pr-10"
+                      />
+                      <button type="button" onClick={() => setShowConfirm(v => !v)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors">
+                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {confirm && password !== confirm && (
+                      <p className="text-xs text-red-500 mt-1.5">Passwords don't match</p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="submit" disabled={loading}
+                  className="btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold mt-2 disabled:opacity-60">
+                  {loading ? (
+                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  ) : (
+                    <>
+                      {mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Send Reset Link'}
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 my-1">
+                  <div className="flex-1 h-px bg-zinc-100" />
+                  <span className="text-xs text-zinc-400">or</span>
+                  <div className="flex-1 h-px bg-zinc-100" />
+                </div>
+
+                {/* Toggle mode */}
+                <div className="text-center text-sm">
+                  {mode === 'login' ? (
+                    <>
+                      <span className="text-zinc-400">Don't have an account? </span>
+                      <button type="button" onClick={() => setMode('register')}
+                        className="font-bold text-red-600 hover:text-red-700 transition-colors">
+                        Sign up free
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-zinc-400">Already have an account? </span>
+                      <button type="button" onClick={() => setMode('login')}
+                        className="font-bold text-red-600 hover:text-red-700 transition-colors">
+                        Sign in
+                      </button>
+                    </>
                   )}
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                  <input
-                    type={showPass ? 'text' : 'password'}
-                    value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder={mode === 'register' ? 'Min. 6 characters' : '••••••••'}
-                    className="input pl-10 pr-10" required autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                  />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors">
-                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
+              </form>
             )}
-
-            {/* Confirm password — register only */}
-            {mode === 'register' && (
-              <div>
-                <label className="label">Confirm Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                  <input
-                    type={showConfirm ? 'text' : 'password'}
-                    value={confirm} onChange={e => setConfirm(e.target.value)}
-                    placeholder="••••••••"
-                    className="input pl-10 pr-10" required autoComplete="new-password"
-                  />
-                  <button type="button" onClick={() => setShowConfirm(v => !v)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors">
-                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Submit */}
-            <button
-              type="submit" disabled={loading}
-              className={cn(
-                'relative w-full h-12 rounded-xl font-semibold text-sm text-white',
-                'bg-gradient-brand hover:opacity-90 active:scale-[0.98]',
-                'shadow-brand hover:shadow-brand-lg',
-                'transition-all duration-200',
-                'flex items-center justify-center gap-2',
-                'disabled:opacity-60 disabled:cursor-not-allowed',
-                'overflow-hidden shine'
-              )}
-            >
-              {loading ? (
-                <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  {mode === 'login'    ? 'Sign In'        :
-                   mode === 'register' ? 'Create Account' : 'Send Reset Link'}
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* T&C for register */}
-          {mode === 'register' && (
-            <p className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-500">
-              By creating an account you agree to our{' '}
-              <Link href="#" className="hover:text-zinc-600 underline">Terms of Service</Link>{' '}
-              and{' '}
-              <Link href="#" className="hover:text-zinc-600 underline">Privacy Policy</Link>
-            </p>
-          )}
+          </div>
         </div>
 
-        {/* Seller CTA */}
-        <div
-          className="mt-4 card-glass p-4 text-center animate-fade-up"
-          style={{ animationDelay: '120ms' }}
-        >
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Want to sell on KorUzMarket?{' '}
-            <Link
-              href="/seller/register"
-              className="font-semibold text-cobalt-500 hover:text-cobalt-600 transition-colors"
-            >
-              Become a seller →
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-xs text-zinc-400 mt-5">
+          By continuing, you agree to our{' '}
+          <a href="#" className="underline hover:text-zinc-600">Terms</a>
+          {' '}and{' '}
+          <a href="#" className="underline hover:text-zinc-600">Privacy Policy</a>
+        </p>
       </div>
     </div>
   )

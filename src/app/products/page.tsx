@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useCallback } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
@@ -19,6 +20,14 @@ const SORT_OPTIONS = [
 ] as const
 
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="container-main py-16 text-center text-zinc-400">Loading…</div>}>
+      <ProductsContent />
+    </Suspense>
+  )
+}
+
+function ProductsContent() {
   const router      = useRouter()
   const pathname    = usePathname()
   const sp          = useSearchParams()

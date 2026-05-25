@@ -2,12 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, ArrowLeft, MapPin, CreditCard, ClipboardCheck, ExternalLink, Shield, Zap } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import {
+  Check, ArrowLeft, MapPin, CreditCard, ClipboardCheck,
+  ExternalLink, Shield, Zap, Package, ChevronRight, ArrowRight,
+} from 'lucide-react'
 import { cn, formatPrice, getCurrency } from '@/lib/utils'
 import { useCartStore } from '@/store'
-import { useLocale, useTranslations } from '@/hooks'
+import { useLocale } from '@/hooks'
 import { ordersApi } from '@/lib/api/client'
-import { Button, Divider } from '@/components/ui'
 import { ROUTES } from '@/config'
 import type { DeliveryAddress } from '@/types'
 import toast from 'react-hot-toast'
@@ -15,39 +19,14 @@ import toast from 'react-hot-toast'
 type Step = 0 | 1 | 2
 
 const STEPS = [
-  { label: 'Delivery',  icon: MapPin },
-  { label: 'Payment',   icon: CreditCard },
-  { label: 'Confirm',   icon: ClipboardCheck },
+  { label: 'Delivery', icon: MapPin },
+  { label: 'Payment',  icon: CreditCard },
+  { label: 'Confirm',  icon: ClipboardCheck },
 ]
-
-// ─── Unired payment config — replace with your actual bank account ─────────
-const UNIRED_CONFIG = {
-  // Your Unired merchant account. Replace with your actual data when connecting backend.
-  // Payment link format: https://unired.uz/pay?merchant_id=YOUR_ID&amount=AMOUNT&order_id=ORDER_ID
-  merchantId:  'YOUR_MERCHANT_ID',   // TODO: set your Unired merchant ID
-  merchantName: 'KorUzMarket',
-  currency:    'UZS',
-  baseUrl:     'https://unired.uz/pay',
-}
-
-function buildUniredLink(orderId: string, amount: number) {
-  // TODO: When backend is connected, generate this server-side for security.
-  // This is a placeholder redirect URL structure for Unired payment gateway.
-  const params = new URLSearchParams({
-    merchant_id: UNIRED_CONFIG.merchantId,
-    amount:      String(amount),
-    order_id:    orderId,
-    currency:    UNIRED_CONFIG.currency,
-    description: `KorUzMarket Order #${orderId}`,
-    return_url:  `${typeof window !== 'undefined' ? window.location.origin : ''}/orders`,
-  })
-  return `${UNIRED_CONFIG.baseUrl}?${params.toString()}`
-}
 
 export default function CheckoutPage() {
   const router     = useRouter()
   const { locale } = useLocale()
-  const { tr }     = useTranslations()
   const { items, totalUZS, totalKRW, clearCart } = useCartStore()
 
   const currency = getCurrency(locale)
@@ -60,338 +39,390 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null)
 
   const [address, setAddress] = useState<DeliveryAddress>({
-    recipientName: '',
-    phone:         '',
-    country:       locale === 'ko' ? 'South Korea' : 'Uzbekistan',
-    region:        '',
-    city:          '',
-    street:        '',
-    apartment:     '',
-    notes:         '',
+    recipientName: '', phone: '', country: locale === 'ko' ? 'Korea' : 'Uzbekistan',
+    region: '', city: '', street: '', apartment: '', notes: '',
   })
+  const [deliveryMethod, setDeliveryMethod] = useState<'standard' | 'express'>('standard')
+  const [paymentMethod,  setPaymentMethod]  = useState<'unired' | 'payme' | 'toss'>('unired')
 
-  if (!items.length) {
-    router.replace(ROUTES.cart)
-    return null
+  if (items.length === 0 && !orderId) {
+    return (
+      <div className="container-main py-24 text-center">
+        <div className="text-5xl mb-5">🛒</div>
+        <h2 className="font-display text-2xl font-bold text-zinc-800 mb-2">Your cart is empty</h2>
+        <p className="text-zinc-400 mb-6 text-sm">Add some products before checking out</p>
+        <Link href={ROUTES.products}>
+          <button className="btn-brand h-11 px-7 inline-flex items-center gap-2 text-sm font-bold">
+            Browse Products <ArrowRight className="h-4 w-4" />
+          </button>
+        </Link>
+      </div>
+    )
   }
 
   async function placeOrder() {
     setPlacing(true)
     try {
-      const res = await ordersApi.create({
+      const orderData = {
         items: items.map(i => ({
-          id: i.productId, productId: i.productId,
-          product: i.product, quantity: i.quantity,
+          id:        `oi-${i.productId}`,
+          productId: i.productId,
+          product:   i.product,
+          quantity:  i.quantity,
           unitPrice: locale === 'ko' ? i.product.priceKRW : i.product.priceUZS,
           currency,
-        })) as any,
+        })),
         deliveryAddress: address,
-        paymentMethod:   'unired',
-        subtotal, deliveryFee: DELIVERY, discount: 0,
-        total, currency,
-      })
-      if (res.success) {
-        const newOrderId = (res.data as any)?.id ?? `ORD-${Date.now()}`
-        setOrderId(newOrderId)
-        clearCart()
-        setStep(2)
+        deliveryMethod,
+        paymentMethod: paymentMethod === 'toss' ? 'toss' : paymentMethod === 'payme' ? 'payme' : 'bank_transfer',
+        subtotal, deliveryFee: DELIVERY, discount: 0, total, currency,
+        userId: 'user-me',
       }
-    } catch {
-      toast.error('Something went wrong. Please try again.')
+      const res = await ordersApi.create(orderData as any)
+      if (!res.success || !res.data) { toast.error(res.error ?? 'Order failed'); return }
+      setOrderId(res.data.id)
+      clearCart()
+      toast.success('Order placed successfully! 🎉')
     } finally {
       setPlacing(false)
     }
   }
 
-  function handleUniredPay() {
-    if (!orderId) return
-    const link = buildUniredLink(orderId, total)
-    window.open(link, '_blank', 'noopener,noreferrer')
-    // After a delay, redirect to orders page
-    setTimeout(() => router.push(ROUTES.orders ?? '/'), 3000)
+  if (orderId) {
+    return (
+      <div className="container-main py-16 pb-24">
+        <div className="max-w-[500px] mx-auto">
+          <div className="gl rounded-[32px] p-10 text-center">
+            <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg,#10b981,#059669)', boxShadow: '0 8px 28px rgba(16,185,129,0.38)' }}>
+              <Check className="h-10 w-10 text-white" strokeWidth={3} />
+            </div>
+            <h2 className="font-display text-[28px] font-bold text-zinc-900 mb-2">Order Placed!</h2>
+            <p className="text-sm text-zinc-400 mb-5">
+              Thank you for your order. We'll send confirmation to your email.
+            </p>
+            <div className="gl-pill px-5 py-3 inline-flex items-center gap-2 mb-7">
+              <Package className="h-4 w-4 text-zinc-500" />
+              <span className="text-sm font-bold text-zinc-600">Order #{orderId}</span>
+            </div>
+            <div className="space-y-3">
+              {paymentMethod === 'unired' && (
+                <a href={`https://unired.uz/pay?order_id=${orderId}&amount=${total}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn-brand flex items-center justify-center gap-2 h-12 w-full text-sm font-bold">
+                  Pay via Unired <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {paymentMethod === 'payme' && (
+                <a href={`https://payme.uz/checkout/${orderId}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn-brand flex items-center justify-center gap-2 h-12 w-full text-sm font-bold">
+                  Pay via Payme <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              <Link href={ROUTES.home}>
+                <button className="btn-glass h-12 w-full flex items-center justify-center gap-2 text-sm font-semibold">
+                  Continue Shopping
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const canNext0 = address.recipientName && address.phone && address.city && address.street
-
   return (
-    <div className="container-main py-8 pb-20 max-w-4xl">
+    <div className="container-main py-6 pb-24">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <Link href={ROUTES.cart}>
+          <button className="gl-icon h-10 w-10">
+            <ArrowLeft className="h-4 w-4 text-zinc-500" />
+          </button>
+        </Link>
+        <h1 className="font-display text-2xl font-bold text-zinc-900">Checkout</h1>
+      </div>
 
-      {/* Back */}
-      <button
-        onClick={() => step === 0 ? router.push(ROUTES.cart) : setStep(s => (s - 1) as Step)}
-        className="mb-6 flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {step === 0 ? 'Back to Cart' : 'Back'}
-      </button>
-
-      {/* Step indicator */}
-      <div className="mb-10 flex items-center">
-        {STEPS.map(({ label, icon: Icon }, i) => (
-          <div key={label} className="flex items-center flex-1 last:flex-none">
-            <div className="flex items-center gap-2.5">
-              <div className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all duration-300',
-                i < step   ? 'bg-gradient-brand text-white shadow-brand' :
-                i === step ? 'bg-gradient-brand text-white shadow-brand ring-4 ring-brand-200 dark:ring-brand-900/40' :
-                             'border-2 border-zinc-200 dark:border-zinc-700 text-zinc-400'
-              )}>
-                {i < step ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-              </div>
-              <span className={cn(
-                'hidden sm:block text-sm font-semibold transition-colors',
-                i === step ? 'text-zinc-900 dark:text-zinc-100' : i < step ? 'text-brand-500' : 'text-zinc-400'
-              )}>{label}</span>
+      {/* Steps */}
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-none pb-1">
+        {STEPS.map((s, i) => (
+          <div key={s.label} className="flex items-center gap-2 flex-shrink-0">
+            <div className={cn('step-dot', i < step ? 'done' : i === step ? 'active' : 'pending')}>
+              {i < step ? <Check className="h-4 w-4" strokeWidth={3} /> : <span>{i + 1}</span>}
             </div>
+            <span className={cn(
+              'text-sm font-semibold',
+              i === step ? 'text-zinc-800' : i < step ? 'text-emerald-600' : 'text-zinc-400'
+            )}>{s.label}</span>
             {i < STEPS.length - 1 && (
-              <div className={cn(
-                'flex-1 mx-3 h-0.5 rounded-full transition-all duration-500',
-                i < step ? 'bg-gradient-brand' : 'bg-zinc-200 dark:bg-zinc-800'
-              )} />
+              <div className={cn('w-8 h-0.5 rounded-full mx-1', i < step ? 'bg-emerald-400' : 'bg-zinc-200')} />
             )}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-10">
-
-        {/* ── Form ─────────────────────────────────────────────────── */}
-        <div className="lg:col-span-3 space-y-6">
-
-          {/* Step 0: Delivery Address */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+        {/* ── Left: form ─────────────────────────────────────────────── */}
+        <div className="space-y-4">
+          {/* Step 0: Delivery */}
           {step === 0 && (
-            <div className="animate-fade-up space-y-5">
-              <div>
-                <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">
-                  Delivery Address
-                </h2>
-                <p className="text-sm text-zinc-500 mt-1">Where should we send your order?</p>
-              </div>
-
-              <div className="card-glass p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Full Name" required colSpan="full"
-                    value={address.recipientName}
-                    onChange={v => setAddress(a => ({ ...a, recipientName: v }))}
-                    placeholder="Aziza Karimova" />
-                  <Field label="Phone Number" required
-                    value={address.phone}
-                    onChange={v => setAddress(a => ({ ...a, phone: v }))}
-                    placeholder="+998 90 123 45 67" />
-                  <Field label="City" required
-                    value={address.city}
-                    onChange={v => setAddress(a => ({ ...a, city: v }))}
-                    placeholder="Tashkent" />
-                  <Field label="Region / Province" colSpan="full"
-                    value={address.region}
-                    onChange={v => setAddress(a => ({ ...a, region: v }))}
-                    placeholder="Tashkent Region" />
-                  <Field label="Street Address" required colSpan="full"
-                    value={address.street}
-                    onChange={v => setAddress(a => ({ ...a, street: v }))}
-                    placeholder="Amir Temur Street, 15" />
-                  <Field label="Apartment / Office"
-                    value={address.apartment ?? ''}
-                    onChange={v => setAddress(a => ({ ...a, apartment: v }))}
-                    placeholder="Apt 4B" />
-                  <Field label="Delivery Notes" colSpan="full"
-                    value={address.notes ?? ''}
-                    onChange={v => setAddress(a => ({ ...a, notes: v }))}
-                    placeholder="Leave at door, call on arrival…" />
-                </div>
-              </div>
-
-              <button
-                disabled={!canNext0}
-                onClick={() => setStep(1)}
-                className={cn(
-                  'w-full h-12 rounded-xl font-semibold text-sm text-white',
-                  'bg-gradient-brand hover:opacity-90 active:scale-[0.98]',
-                  'shadow-brand transition-all duration-200',
-                  'flex items-center justify-center gap-2',
-                  'disabled:opacity-50 disabled:cursor-not-allowed',
-                  'overflow-hidden shine relative'
-                )}
-              >
-                Continue to Payment →
-              </button>
-            </div>
-          )}
-
-          {/* Step 1: Payment via Unired */}
-          {step === 1 && (
-            <div className="animate-fade-up space-y-5">
-              <div>
-                <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">
-                  Payment
-                </h2>
-                <p className="text-sm text-zinc-500 mt-1">Secure payment via Unired gateway</p>
-              </div>
-
-              {/* Unired payment card */}
-              <div className="card-glass p-5 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cobalt text-white text-2xl font-bold shadow-cobalt flex-shrink-0">
-                    U
-                  </div>
-                  <div>
-                    <div className="font-bold text-zinc-900 dark:text-white text-base">Unired Payment</div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">Fast & secure Uzbek payment gateway</div>
-                  </div>
-                  <div className="ml-auto flex-shrink-0">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2.5 py-1">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      Active
-                    </span>
-                  </div>
-                </div>
-
-                <div className="rounded-xl bg-cobalt-50 dark:bg-cobalt-950/30 border border-cobalt-100 dark:border-cobalt-900/30 p-4 space-y-2">
-                  <div className="flex items-center gap-2 text-cobalt-700 dark:text-cobalt-400 font-semibold text-sm">
-                    <Zap className="h-4 w-4" />
-                    How it works
-                  </div>
-                  <ol className="text-sm text-cobalt-600 dark:text-cobalt-400 space-y-1 list-decimal list-inside">
-                    <li>Click "Place Order & Pay" below</li>
-                    <li>You will be redirected to Unired's secure payment page</li>
-                    <li>Pay via your Uzbek bank card or account</li>
-                    <li>Return here — your order will be confirmed automatically</li>
-                  </ol>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
-                  <Shield className="h-3.5 w-3.5" />
-                  Payments are processed securely by Unired. KorUzMarket does not store your card details.
-                </div>
-              </div>
-
-              <button
-                onClick={placeOrder}
-                disabled={placing}
-                className={cn(
-                  'relative w-full h-12 rounded-xl font-semibold text-sm text-white',
-                  'bg-gradient-brand hover:opacity-90 active:scale-[0.98]',
-                  'shadow-brand transition-all duration-200',
-                  'flex items-center justify-center gap-2',
-                  'disabled:opacity-60 disabled:cursor-not-allowed',
-                  'overflow-hidden shine'
-                )}
-              >
-                {placing ? (
-                  <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                ) : (
-                  <>Place Order & Pay via Unired <ExternalLink className="h-4 w-4" /></>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Step 2: Redirecting to Unired */}
-          {step === 2 && (
-            <div className="animate-fade-up space-y-5 text-center">
-              <div className="flex flex-col items-center gap-4 py-4">
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                  <Check className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
-                  <div className="absolute inset-0 rounded-full border-2 border-emerald-300 dark:border-emerald-700 animate-ping opacity-50" />
+            <div className="gl rounded-[28px] p-6 space-y-4">
+              <h2 className="font-display text-xl font-bold text-zinc-900">Delivery Address</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Full Name</label>
+                  <input className="input" placeholder="Aziz Karimov"
+                    value={address.recipientName} onChange={e => setAddress(a => ({ ...a, recipientName: e.target.value }))} required />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">
-                    Order Created!
-                  </h2>
-                  <p className="text-sm text-zinc-500 mt-1.5">
-                    Order <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300">#{orderId}</span> is ready.
-                    <br />Complete your payment via Unired to confirm.
-                  </p>
+                  <label className="label">Phone Number</label>
+                  <input className="input" placeholder="+998 90 123 4567"
+                    value={address.phone} onChange={e => setAddress(a => ({ ...a, phone: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="label">Country</label>
+                  <select className="input" value={address.country} onChange={e => setAddress(a => ({ ...a, country: e.target.value }))}>
+                    <option>Uzbekistan</option>
+                    <option>Korea</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Region / Province</label>
+                  <input className="input" placeholder="Tashkent"
+                    value={address.region} onChange={e => setAddress(a => ({ ...a, region: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="label">City</label>
+                  <input className="input" placeholder="Tashkent"
+                    value={address.city} onChange={e => setAddress(a => ({ ...a, city: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="label">Street Address</label>
+                  <input className="input" placeholder="Amir Temur Street 15"
+                    value={address.street} onChange={e => setAddress(a => ({ ...a, street: e.target.value }))} required />
+                </div>
+                <div>
+                  <label className="label">Apartment / Flat (optional)</label>
+                  <input className="input" placeholder="Apt 4B"
+                    value={address.apartment ?? ''} onChange={e => setAddress(a => ({ ...a, apartment: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Delivery Notes (optional)</label>
+                  <input className="input" placeholder="Ring bell twice"
+                    value={address.notes ?? ''} onChange={e => setAddress(a => ({ ...a, notes: e.target.value }))} />
                 </div>
               </div>
 
-              <button
-                onClick={handleUniredPay}
-                className={cn(
-                  'relative w-full h-14 rounded-2xl font-bold text-base text-white',
-                  'bg-gradient-cobalt hover:opacity-90 active:scale-[0.98]',
-                  'shadow-cobalt transition-all duration-200',
-                  'flex items-center justify-center gap-3',
-                  'overflow-hidden shine'
-                )}
-              >
-                <div className="h-8 w-8 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg">U</div>
-                Pay {formatPrice(total, currency, locale)} via Unired
-                <ExternalLink className="h-4 w-4" />
-              </button>
+              <div>
+                <p className="label mb-3">Delivery Method</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { id: 'standard' as const, label: 'Standard', desc: '7–14 days', price: DELIVERY, icon: '📦' },
+                    { id: 'express'  as const, label: 'Express',  desc: '3–7 days',  price: DELIVERY * 2, icon: '⚡' },
+                  ].map(opt => (
+                    <button key={opt.id} type="button" onClick={() => setDeliveryMethod(opt.id)}
+                      className={cn(
+                        'relative flex items-center gap-3 p-4 rounded-2xl transition-all text-left',
+                        deliveryMethod === opt.id ? 'ring-2 ring-red-500' : '',
+                      )}
+                      style={{
+                        background: deliveryMethod === opt.id ? 'rgba(228,0,43,0.07)' : 'rgba(255,255,255,0.60)',
+                        backdropFilter: 'blur(16px)',
+                        border: deliveryMethod === opt.id ? '1px solid rgba(228,0,43,0.20)' : '1px solid rgba(255,255,255,0.80)',
+                      }}>
+                      <span className="text-2xl">{opt.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-zinc-800">{opt.label}</p>
+                        <p className="text-xs text-zinc-400">{opt.desc}</p>
+                      </div>
+                      <span className="text-sm font-bold text-zinc-700">{formatPrice(opt.price, currency, locale)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                You'll be redirected to Unired's secure payment page in a new tab.
-                Your order will be confirmed once payment is received.
-              </p>
+              <button onClick={() => {
+                if (!address.recipientName || !address.phone || !address.city || !address.street) {
+                  toast.error('Please fill in all required fields')
+                  return
+                }
+                setStep(1)
+              }} className="btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold">
+                Continue to Payment <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Step 1: Payment */}
+          {step === 1 && (
+            <div className="gl rounded-[28px] p-6 space-y-4">
+              <h2 className="font-display text-xl font-bold text-zinc-900">Payment Method</h2>
+              <div className="space-y-3">
+                {[
+                  { id: 'unired' as const, label: 'Unired',   desc: 'Bank transfer via Unired gateway',  icon: '🏦', available: true },
+                  { id: 'payme'  as const, label: 'Payme',    desc: 'Pay via Payme wallet (Uzbekistan)',  icon: '📱', available: true },
+                  { id: 'toss'   as const, label: 'Toss Pay', desc: 'Korean payment (Coming soon)',       icon: '🇰🇷', available: false },
+                ].map(opt => (
+                  <button key={opt.id} type="button"
+                    disabled={!opt.available}
+                    onClick={() => opt.available && setPaymentMethod(opt.id)}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-4 rounded-2xl transition-all text-left',
+                      !opt.available ? 'opacity-40 cursor-not-allowed' : '',
+                      paymentMethod === opt.id ? 'ring-2 ring-red-500' : '',
+                    )}
+                    style={{
+                      background: paymentMethod === opt.id ? 'rgba(228,0,43,0.07)' : 'rgba(255,255,255,0.60)',
+                      backdropFilter: 'blur(16px)',
+                      border: paymentMethod === opt.id ? '1px solid rgba(228,0,43,0.20)' : '1px solid rgba(255,255,255,0.80)',
+                    }}>
+                    <span className="text-2xl">{opt.icon}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-zinc-800">{opt.label}</p>
+                      <p className="text-xs text-zinc-400">{opt.desc}</p>
+                    </div>
+                    {paymentMethod === opt.id && (
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg,#E4002B,#b8001f)' }}>
+                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-xl"
+                style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.16)' }}>
+                <Shield className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                <p className="text-xs text-emerald-700">Your payment information is secure and encrypted</p>
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep(0)} className="btn-glass h-12 px-5 flex items-center gap-2 text-sm font-semibold">
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </button>
+                <button onClick={() => setStep(2)} className="btn-brand flex-1 h-12 flex items-center justify-center gap-2 text-sm font-bold">
+                  Review Order <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Confirm */}
+          {step === 2 && (
+            <div className="gl rounded-[28px] p-6 space-y-5">
+              <h2 className="font-display text-xl font-bold text-zinc-900">Review & Confirm</h2>
+
+              {/* Delivery summary */}
+              <div className="rounded-2xl p-4 space-y-1"
+                style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.75)' }}>
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-2">Delivery To</p>
+                <p className="text-sm font-semibold text-zinc-800">{address.recipientName}</p>
+                <p className="text-sm text-zinc-500">{address.street}{address.apartment ? `, ${address.apartment}` : ''}</p>
+                <p className="text-sm text-zinc-500">{address.city}, {address.region}, {address.country}</p>
+                <p className="text-sm text-zinc-500">{address.phone}</p>
+              </div>
+
+              {/* Items */}
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-wide">Items ({items.length})</p>
+                {items.map(item => {
+                  const img = item.product.images.find(i => i.isPrimary) ?? item.product.images[0]
+                  const price = locale === 'ko' ? item.product.priceKRW : item.product.priceUZS
+                  return (
+                    <div key={item.productId} className="flex items-center gap-3">
+                      {img && (
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0"
+                          style={{ background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(255,255,255,0.80)' }}>
+                          <Image src={img.url} alt={img.altText} fill className="object-cover" sizes="48px" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-zinc-800 clamp-1">
+                          {item.product.title[locale] || item.product.title.uz}
+                        </p>
+                        <p className="text-xs text-zinc-400">Qty: {item.quantity}</p>
+                      </div>
+                      <span className="text-sm font-bold text-zinc-800 flex-shrink-0">
+                        {formatPrice(price * item.quantity, currency, locale)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep(1)} className="btn-glass h-12 px-5 flex items-center gap-2 text-sm font-semibold">
+                  <ArrowLeft className="h-4 w-4" /> Back
+                </button>
+                <button onClick={placeOrder} disabled={placing}
+                  className="btn-brand flex-1 h-12 flex items-center justify-center gap-2 text-sm font-bold disabled:opacity-60">
+                  {placing ? (
+                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  ) : (
+                    <><Zap className="h-4 w-4" />Place Order</>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── Order Summary ─────────────────────────────────────────── */}
-        <aside className="lg:col-span-2">
-          <div className="card-glass p-5 space-y-4 sticky top-28">
-            <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Order Summary</h3>
+        {/* ── Right: Order summary ─────────────────────────────────────── */}
+        <div>
+          <div className="gl rounded-[28px] p-5 sticky top-6 space-y-4">
+            <h3 className="font-display text-lg font-bold text-zinc-900">Order Summary</h3>
 
-            <div className="space-y-2.5 max-h-52 overflow-y-auto scrollbar-none">
-              {items.map(item => (
-                <div key={item.productId} className="flex gap-2 text-sm">
-                  <span className="flex-1 clamp-2 text-zinc-600 dark:text-zinc-400">
-                    {item.product.title[locale] || item.product.title.uz}
-                    <span className="text-zinc-400 ml-1">×{item.quantity}</span>
-                  </span>
-                  <span className="flex-shrink-0 font-bold text-zinc-900 dark:text-zinc-100">
-                    {formatPrice(
-                      (locale === 'ko' ? item.product.priceKRW : item.product.priceUZS) * item.quantity,
-                      currency, locale
+            <div className="space-y-3 max-h-60 overflow-y-auto scrollbar-none">
+              {items.map(item => {
+                const img   = item.product.images.find(i => i.isPrimary) ?? item.product.images[0]
+                const price = locale === 'ko' ? item.product.priceKRW : item.product.priceUZS
+                return (
+                  <div key={item.productId} className="flex items-center gap-2.5">
+                    {img && (
+                      <div className="relative w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"
+                        style={{ background: 'rgba(255,255,255,0.60)', border: '1px solid rgba(255,255,255,0.75)' }}>
+                        <Image src={img.url} alt={img.altText} fill className="object-cover" sizes="44px" />
+                      </div>
                     )}
-                  </span>
-                </div>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-zinc-700 clamp-1">
+                        {item.product.title[locale] || item.product.title.uz}
+                      </p>
+                      <p className="text-[11px] text-zinc-400">×{item.quantity}</p>
+                    </div>
+                    <span className="text-xs font-bold text-zinc-700 flex-shrink-0">
+                      {formatPrice(price * item.quantity, currency, locale)}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
 
-            <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-1.5 text-sm">
-              <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
+            <div className="border-t border-zinc-100 pt-3 space-y-2">
+              <div className="flex justify-between text-sm text-zinc-500">
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal, currency, locale)}</span>
               </div>
-              <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
-                <span>Delivery</span>
+              <div className="flex justify-between text-sm text-zinc-500">
+                <span>Delivery ({deliveryMethod})</span>
                 <span>{formatPrice(DELIVERY, currency, locale)}</span>
               </div>
-              <div className="flex justify-between font-bold text-zinc-900 dark:text-white pt-1 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-between text-base font-bold text-zinc-900 pt-2 border-t border-zinc-100">
                 <span>Total</span>
-                <span className="text-brand-500">{formatPrice(total, currency, locale)}</span>
+                <span className="text-gradient-brand">{formatPrice(total, currency, locale)}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500 pt-1">
-              <Shield className="h-3.5 w-3.5 flex-shrink-0" />
-              Secure checkout powered by Unired
+            <div className="flex items-center gap-2 p-3 rounded-xl"
+              style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.14)' }}>
+              <Shield className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+              <p className="text-[11px] text-emerald-700 font-medium">Secure & encrypted checkout</p>
             </div>
           </div>
-        </aside>
+        </div>
       </div>
-    </div>
-  )
-}
-
-// ─── Field helper ─────────────────────────────────────────────────────────────
-function Field({ label, value, onChange, placeholder, required, colSpan }: {
-  label: string; value: string; onChange: (v: string) => void
-  placeholder?: string; required?: boolean; colSpan?: 'full'
-}) {
-  return (
-    <div className={cn(colSpan === 'full' && 'col-span-2')}>
-      <label className="label">
-        {label}{required && <span className="ml-0.5 text-brand-500">*</span>}
-      </label>
-      <input
-        type="text" value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="input"
-      />
     </div>
   )
 }

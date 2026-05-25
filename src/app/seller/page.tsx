@@ -1,610 +1,283 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import Link from 'next/link'
 import {
-  Package, Plus, ImagePlus, Tag, DollarSign, AlignLeft,
-  ChevronDown, Store, Layers, BarChart2, ShoppingBag,
-  CheckCircle2, X, ArrowLeft, Truck, Globe, Star
+  ArrowRight, Store, CheckCircle, TrendingUp, Users,
+  Globe, Zap, ShieldCheck, Star, ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { CATEGORIES } from '@/config'
+import { sellersApi } from '@/lib/api/client'
+import { ROUTES } from '@/config'
 import toast from 'react-hot-toast'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface ProductForm {
-  titleEn:     string
-  titleUz:     string
-  titleKo:     string
-  category:    string
-  origin:      'KR' | 'UZ' | ''
-  priceUZS:    string
-  priceKRW:    string
-  originalUZS: string
-  originalKRW: string
-  description: string
-  stockQty:    string
-  weight:      string
-  tags:        string
-  images:      File[]
-}
-
-const EMPTY_FORM: ProductForm = {
-  titleEn: '', titleUz: '', titleKo: '',
-  category: '', origin: '', priceUZS: '', priceKRW: '',
-  originalUZS: '', originalKRW: '', description: '',
-  stockQty: '10', weight: '', tags: '', images: [],
-}
-
-const TABS = [
-  { id: 'products',  label: 'My Products',  icon: Package },
-  { id: 'add',       label: 'Add Product',  icon: Plus },
-  { id: 'orders',    label: 'Orders',       icon: ShoppingBag },
-  { id: 'analytics', label: 'Analytics',    icon: BarChart2 },
-]
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const MOCK_PRODUCTS = [
-  { id: '1', title: 'Korean Ginseng Extract 100ml', category: 'health', origin: 'KR', priceUZS: 180000, stock: 23, sold: 41, status: 'active' as const },
-  { id: '2', title: 'Uzbek Dried Apricots 500g',    category: 'food',   origin: 'UZ', priceUZS: 65000,  stock: 58, sold: 12, status: 'active' as const },
-  { id: '3', title: 'K-Beauty Snail Serum 30ml',    category: 'beauty', origin: 'KR', priceUZS: 240000, stock: 0,  sold: 87, status: 'out_of_stock' as const },
-]
-
 export default function SellerPage() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState<string>('products')
-  const [form,      setForm]      = useState<ProductForm>(EMPTY_FORM)
-  const [submitting, setSubmitting] = useState(false)
-  const [step,      setStep]      = useState<0|1|2>(0) // form wizard steps
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [loading,  setLoading]  = useState(false)
+  const [applied,  setApplied]  = useState(false)
 
-  function setF<K extends keyof ProductForm>(key: K, val: ProductForm[K]) {
-    setForm(f => ({ ...f, [key]: val }))
-  }
+  const [form, setForm] = useState({
+    businessName: '', email: '', phone: '',
+    country: 'KR' as 'KR' | 'UZ', description: '',
+  })
 
-  function handleImages(files: FileList | null) {
-    if (!files) return
-    const arr = Array.from(files).slice(0, 8 - form.images.length)
-    setF('images', [...form.images, ...arr])
-  }
-
-  async function handleSubmit() {
-    if (!form.titleEn || !form.category || !form.origin || !form.priceUZS) {
-      toast.error('Please fill in all required fields')
-      return
+  async function handleApply(e: React.FormEvent) {
+    e.preventDefault()
+    if (loading) return
+    setLoading(true)
+    try {
+      const res = await sellersApi.apply(form)
+      if (!res.success) { toast.error(res.error ?? 'Application failed'); return }
+      setApplied(true)
+      toast.success("Application submitted! We'll contact you within 48 hours.")
+    } finally {
+      setLoading(false)
     }
-    setSubmitting(true)
-    // TODO: POST to /api/seller/products with FormData
-    await new Promise(r => setTimeout(r, 1400))
-    toast.success('Product listed successfully! 🎉')
-    setForm(EMPTY_FORM)
-    setStep(0)
-    setActiveTab('products')
-    setSubmitting(false)
   }
 
-  return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-surface-950">
+  const BENEFITS = [
+    { icon: Users,      title: '50,000+ Customers',    desc: 'Access a growing customer base across Korea and Uzbekistan' },
+    { icon: Globe,      title: 'Cross-Border Sales',   desc: 'Sell from Korea to Uzbekistan and vice versa with ease' },
+    { icon: TrendingUp, title: 'Analytics Dashboard',  desc: 'Real-time sales analytics, trends, and performance insights' },
+    { icon: ShieldCheck, title: 'Seller Protection',  desc: 'Secure payments, dispute resolution, and seller guarantees' },
+    { icon: Zap,        title: 'Fast Onboarding',     desc: 'Get verified and start selling within 48 hours' },
+    { icon: Star,       title: 'Featured Placement',  desc: 'Top sellers get featured on our homepage and promotions' },
+  ]
 
-      {/* ── Top Header ──────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-surface-950/80 backdrop-blur-md border-b border-zinc-100 dark:border-zinc-800">
-        <div className="container-main">
-          <div className="flex items-center gap-4 h-16">
-            <button onClick={() => router.back()}
-              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-white shadow-brand">
-                <Store className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="font-bold text-zinc-900 dark:text-white text-sm leading-tight">Seller Dashboard</div>
-                <div className="text-[11px] text-zinc-400">KorUzMarket</div>
-              </div>
+  const TESTIMONIALS = [
+    { name: 'Seoul Beauty Co.', country: '🇰🇷', stars: 5, text: 'KorUzMarket opened an entirely new market for us. Sales tripled in 3 months!' },
+    { name: "O'zbek Taomi",     country: '🇺🇿', stars: 5, text: 'I can now reach Korean customers with our traditional Uzbek food products.' },
+    { name: 'K-Food Direct',    country: '🇰🇷', stars: 5, text: 'The platform is easy to use and the support team is very responsive.' },
+  ]
+
+  if (applied) {
+    return (
+      <div className="container-main py-24 text-center">
+        <div className="max-w-[440px] mx-auto animate-fade-up">
+          <div className="gl rounded-[32px] p-10">
+            <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-4xl"
+              style={{ background: 'linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.05))', border: '2px solid rgba(16,185,129,0.25)' }}>
+              🎉
             </div>
-
-            {/* Stats pills */}
-            <div className="ml-auto hidden sm:flex items-center gap-3">
-              {[
-                { label: 'Products', value: '3', color: 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-400' },
-                { label: 'Orders',   value: '12', color: 'bg-cobalt-50 text-cobalt-700 dark:bg-cobalt-950/30 dark:text-cobalt-400' },
-                { label: 'Revenue',  value: '₩2.4M', color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
-              ].map(s => (
-                <span key={s.label} className={cn('rounded-full px-3 py-1 text-xs font-bold', s.color)}>
-                  {s.value} {s.label}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-1 pb-0 -mb-px overflow-x-auto scrollbar-none">
-            {TABS.map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setActiveTab(id)}
-                className={cn(
-                  'flex items-center gap-1.5 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all duration-200',
-                  activeTab === id
-                    ? 'border-brand-500 text-brand-600 dark:text-brand-400'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
-                )}>
-                <Icon className="h-4 w-4" />
-                {label}
+            <h2 className="font-display text-2xl font-bold text-zinc-900 mb-3">Application Submitted!</h2>
+            <p className="text-sm text-zinc-500 leading-relaxed mb-6">
+              Thank you <strong>{form.businessName}</strong>! Our team will review your application and get back to you within 48 hours at <strong>{form.email}</strong>.
+            </p>
+            <Link href={ROUTES.home}>
+              <button className="btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold">
+                Back to Home <ArrowRight className="h-4 w-4" />
               </button>
-            ))}
+            </Link>
           </div>
         </div>
       </div>
+    )
+  }
 
-      <div className="container-main py-8 max-w-4xl">
-
-        {/* ── My Products Tab ──────────────────────────────────────────── */}
-        {activeTab === 'products' && (
-          <div className="space-y-4 animate-fade-up">
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">My Products</h2>
-              <button onClick={() => setActiveTab('add')}
-                className={cn(
-                  'flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-semibold text-white',
-                  'bg-gradient-brand shadow-brand hover:opacity-90 active:scale-95 transition-all',
-                  'overflow-hidden shine relative'
-                )}>
-                <Plus className="h-4 w-4" /> Add Product
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {MOCK_PRODUCTS.map((p, i) => (
-                <div key={p.id}
-                  className="card-glass p-4 flex items-center gap-4 animate-fade-up"
-                  style={{ animationDelay: `${i * 60}ms` }}>
-
-                  {/* Product image placeholder */}
-                  <div className={cn(
-                    'h-14 w-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl',
-                    p.origin === 'KR' ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20'
-                  )}>
-                    {p.origin === 'KR' ? '🇰🇷' : '🇺🇿'}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.title}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-xs text-zinc-500">{p.category}</span>
-                      <span className="text-xs text-zinc-300 dark:text-zinc-600">·</span>
-                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        {p.priceUZS.toLocaleString()} UZS
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className={cn(
-                      'text-xs font-bold px-2.5 py-1 rounded-full',
-                      p.status === 'active'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                    )}>
-                      {p.status === 'active' ? `${p.stock} in stock` : 'Out of stock'}
-                    </span>
-                    <span className="text-xs text-zinc-400">{p.sold} sold</span>
-                  </div>
-
-                  <button className="flex-shrink-0 h-8 w-8 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:border-zinc-300 transition-all">
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Add Product Tab ───────────────────────────────────────────── */}
-        {activeTab === 'add' && (
-          <div className="animate-fade-up space-y-6">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">List a Product</h2>
-              <p className="text-sm text-zinc-500 mt-1">Fill in the details below to list your product on KorUzMarket</p>
-            </div>
-
-            {/* Step progress */}
-            <div className="flex items-center gap-2">
-              {['Product Info', 'Pricing & Stock', 'Images & Publish'].map((s, i) => (
-                <div key={s} className="flex items-center gap-2 flex-1 last:flex-none">
-                  <div className={cn(
-                    'h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all',
-                    i < step   ? 'bg-emerald-500 text-white' :
-                    i === step ? 'bg-gradient-brand text-white shadow-brand' :
-                                 'bg-zinc-200 dark:bg-zinc-700 text-zinc-500'
-                  )}>
-                    {i < step ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
-                  </div>
-                  <span className={cn(
-                    'text-xs font-semibold hidden sm:block whitespace-nowrap',
-                    i === step ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400'
-                  )}>{s}</span>
-                  {i < 2 && <div className={cn('flex-1 h-0.5 rounded-full', i < step ? 'bg-emerald-400' : 'bg-zinc-200 dark:bg-zinc-700')} />}
-                </div>
-              ))}
-            </div>
-
-            {/* ── Step 0: Basic Info ────────────────────────────────── */}
-            {step === 0 && (
-              <div className="space-y-5">
-                <div className="card-glass p-6 space-y-5">
-                  <SectionTitle icon={<Package className="h-4 w-4" />} title="Product Details" />
-
-                  {/* Origin selector */}
-                  <div>
-                    <label className="label">Product Origin *</label>
-                    <div className="flex gap-3">
-                      {([
-                        { val: 'KR' as const, flag: '🇰🇷', label: 'Made in Korea' },
-                        { val: 'UZ' as const, flag: '🇺🇿', label: 'Made in Uzbekistan' },
-                      ] as const).map(({ val, flag, label }) => (
-                        <button key={val} type="button" onClick={() => setF('origin', val)}
-                          className={cn(
-                            'flex-1 flex items-center gap-3 rounded-xl border-2 p-3.5 transition-all text-left',
-                            form.origin === val
-                              ? val === 'KR'
-                                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
-                                : 'border-cobalt-500 bg-cobalt-50 dark:bg-cobalt-950/20'
-                              : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                          )}>
-                          <span className="text-2xl">{flag}</span>
-                          <div>
-                            <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{val}</div>
-                            <div className="text-xs text-zinc-500">{label}</div>
-                          </div>
-                          {form.origin === val && <CheckCircle2 className={cn('h-5 w-5 ml-auto', val === 'KR' ? 'text-brand-500' : 'text-cobalt-500')} />}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Titles */}
-                  <div>
-                    <label className="label">Product Name (English) *</label>
-                    <input type="text" value={form.titleEn}
-                      onChange={e => setF('titleEn', e.target.value)}
-                      placeholder="Korean Red Ginseng Extract 100ml"
-                      className="input" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label">Name in Uzbek</label>
-                      <input type="text" value={form.titleUz}
-                        onChange={e => setF('titleUz', e.target.value)}
-                        placeholder="Koreya qizil ginseng…"
-                        className="input" />
-                    </div>
-                    <div>
-                      <label className="label">Name in Korean</label>
-                      <input type="text" value={form.titleKo}
-                        onChange={e => setF('titleKo', e.target.value)}
-                        placeholder="한국 홍삼 추출물…"
-                        className="input" />
-                    </div>
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <label className="label">Category *</label>
-                    <div className="relative">
-                      <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                      <select value={form.category}
-                        onChange={e => setF('category', e.target.value)}
-                        className="input pl-10 appearance-none">
-                        <option value="">Select a category</option>
-                        {CATEGORIES.map(c => (
-                          <option key={c.value} value={c.value}>{c.icon} {c.en ?? c.uz}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="label">Product Description</label>
-                    <textarea value={form.description}
-                      onChange={e => setF('description', e.target.value)}
-                      placeholder="Describe your product — ingredients, benefits, usage instructions, packaging…"
-                      rows={4}
-                      className="input !h-auto py-3 resize-none" />
-                    <p className="mt-1 text-xs text-zinc-400">{form.description.length}/2000 characters</p>
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <label className="label">Tags</label>
-                    <div className="relative">
-                      <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                      <input type="text" value={form.tags}
-                        onChange={e => setF('tags', e.target.value)}
-                        placeholder="ginseng, health, organic, natural (separate with commas)"
-                        className="input pl-10" />
-                    </div>
-                  </div>
-                </div>
-
-                <StepNav onNext={() => {
-                  if (!form.titleEn || !form.category || !form.origin) { toast.error('Please fill in required fields'); return }
-                  setStep(1)
-                }} />
-              </div>
-            )}
-
-            {/* ── Step 1: Pricing & Stock ──────────────────────────── */}
-            {step === 1 && (
-              <div className="space-y-5">
-                <div className="card-glass p-6 space-y-5">
-                  <SectionTitle icon={<DollarSign className="h-4 w-4" />} title="Pricing & Inventory" />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="label">Price in UZS (som) *</label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">UZS</span>
-                        <input type="number" value={form.priceUZS}
-                          onChange={e => setF('priceUZS', e.target.value)}
-                          placeholder="150000" min="0"
-                          className="input pl-14" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Price in KRW (₩)</label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">₩</span>
-                        <input type="number" value={form.priceKRW}
-                          onChange={e => setF('priceKRW', e.target.value)}
-                          placeholder="15000" min="0"
-                          className="input pl-10" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Original Price UZS <span className="text-xs font-normal text-zinc-400">(before discount)</span></label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">UZS</span>
-                        <input type="number" value={form.originalUZS}
-                          onChange={e => setF('originalUZS', e.target.value)}
-                          placeholder="200000" min="0"
-                          className="input pl-14" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Original Price KRW <span className="text-xs font-normal text-zinc-400">(before discount)</span></label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">₩</span>
-                        <input type="number" value={form.originalKRW}
-                          onChange={e => setF('originalKRW', e.target.value)}
-                          placeholder="20000" min="0"
-                          className="input pl-10" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Discount preview */}
-                  {form.priceUZS && form.originalUZS && Number(form.originalUZS) > Number(form.priceUZS) && (
-                    <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 p-3">
-                      <Star className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                      <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                        Discount: <strong>{Math.round((1 - Number(form.priceUZS) / Number(form.originalUZS)) * 100)}% off</strong> — this will show as a badge on your product
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="label">Stock Quantity *</label>
-                      <div className="relative">
-                        <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                        <input type="number" value={form.stockQty}
-                          onChange={e => setF('stockQty', e.target.value)}
-                          placeholder="50" min="0"
-                          className="input pl-10" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Weight (grams)</label>
-                      <div className="relative">
-                        <Truck className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                        <input type="number" value={form.weight}
-                          onChange={e => setF('weight', e.target.value)}
-                          placeholder="250" min="0"
-                          className="input pl-10" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <StepNav onBack={() => setStep(0)} onNext={() => {
-                  if (!form.priceUZS) { toast.error('Please enter a price'); return }
-                  setStep(2)
-                }} />
-              </div>
-            )}
-
-            {/* ── Step 2: Images & Publish ─────────────────────────── */}
-            {step === 2 && (
-              <div className="space-y-5">
-                <div className="card-glass p-6 space-y-5">
-                  <SectionTitle icon={<ImagePlus className="h-4 w-4" />} title="Product Images" />
-
-                  {/* Image upload area */}
-                  <div
-                    onClick={() => fileRef.current?.click()}
-                    className={cn(
-                      'border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200',
-                      'border-zinc-200 dark:border-zinc-700 hover:border-brand-300 dark:hover:border-brand-700',
-                      'hover:bg-brand-50/50 dark:hover:bg-brand-900/10'
-                    )}>
-                    <input ref={fileRef} type="file" multiple accept="image/*" className="hidden"
-                      onChange={e => handleImages(e.target.files)} />
-                    <ImagePlus className="h-10 w-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-                    <p className="font-semibold text-sm text-zinc-600 dark:text-zinc-400">
-                      Click to upload images
-                    </p>
-                    <p className="text-xs text-zinc-400 mt-1">PNG, JPG up to 10MB · Up to 8 photos</p>
-                  </div>
-
-                  {/* Image previews */}
-                  {form.images.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {form.images.map((file, i) => (
-                        <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 group">
-                          <img src={URL.createObjectURL(file)} alt="" className="object-cover w-full h-full" />
-                          {i === 0 && (
-                            <span className="absolute top-1 left-1 rounded-md bg-brand-500 text-white text-[10px] font-bold px-1.5 py-0.5">
-                              Main
-                            </span>
-                          )}
-                          <button
-                            onClick={() => setF('images', form.images.filter((_, j) => j !== i))}
-                            className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Publish checklist */}
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 p-4 space-y-2">
-                    <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-3">Pre-publish checklist</p>
-                    {[
-                      { label: 'Product title (English)',           done: !!form.titleEn },
-                      { label: 'Category selected',                 done: !!form.category },
-                      { label: 'Origin set (KR or UZ)',             done: !!form.origin },
-                      { label: 'Price in UZS',                      done: !!form.priceUZS },
-                      { label: 'Product image uploaded',            done: form.images.length > 0 },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-center gap-2.5">
-                        <div className={cn(
-                          'h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0',
-                          item.done ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700'
-                        )}>
-                          {item.done && <Check className="h-2.5 w-2.5 text-white" />}
-                        </div>
-                        <span className={cn('text-sm', item.done ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-500')}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Final submit */}
-                <div className="flex gap-3">
-                  <button onClick={() => setStep(1)}
-                    className="flex items-center gap-2 px-5 h-12 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all">
-                    <ArrowLeft className="h-4 w-4" /> Back
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className={cn(
-                      'flex-1 h-12 rounded-xl font-bold text-sm text-white',
-                      'bg-gradient-brand hover:opacity-90 active:scale-[0.98]',
-                      'shadow-brand transition-all duration-200',
-                      'flex items-center justify-center gap-2',
-                      'disabled:opacity-60 disabled:cursor-not-allowed',
-                      'overflow-hidden shine relative'
-                    )}>
-                    {submitting ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    ) : (
-                      <><Globe className="h-4 w-4" /> Publish Product</>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Orders Tab ───────────────────────────────────────────────── */}
-        {activeTab === 'orders' && (
-          <div className="animate-fade-up space-y-4">
-            <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Orders</h2>
-            <div className="card-glass p-8 text-center">
-              <ShoppingBag className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-              <p className="font-semibold text-zinc-600 dark:text-zinc-400">Orders will appear here</p>
-              <p className="text-sm text-zinc-400 mt-1">Connect your backend to load real order data</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Analytics Tab ────────────────────────────────────────────── */}
-        {activeTab === 'analytics' && (
-          <div className="animate-fade-up space-y-4">
-            <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Analytics</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { label: 'Total Revenue',  value: '₩2,400,000',  sub: '+12% this month',   color: 'from-brand-500 to-brand-700' },
-                { label: 'Products Sold',  value: '140',           sub: '3 products listed', color: 'from-cobalt-500 to-cobalt-700' },
-                { label: 'Avg. Rating',    value: '4.8 ★',         sub: 'From 23 reviews',   color: 'from-amber-500 to-orange-600' },
-              ].map((s, i) => (
-                <div key={s.label}
-                  className={cn('rounded-2xl bg-gradient-to-br p-5 text-white shadow-card', s.color)}
-                  style={{ animationDelay: `${i * 60}ms` }}>
-                  <div className="text-white/70 text-sm font-medium mb-2">{s.label}</div>
-                  <div className="text-2xl font-bold">{s.value}</div>
-                  <div className="text-white/60 text-xs mt-1">{s.sub}</div>
-                </div>
-              ))}
-            </div>
-            <div className="card-glass p-8 text-center">
-              <BarChart2 className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-              <p className="font-semibold text-zinc-600 dark:text-zinc-400">Detailed analytics coming soon</p>
-              <p className="text-sm text-zinc-400 mt-1">Connect backend to display charts</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Helper components ────────────────────────────────────────────────────────
-function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div className="flex items-center gap-2.5 pb-2 border-b border-zinc-100 dark:border-zinc-700/50">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-brand text-white">
-        {icon}
-      </div>
-      <span className="font-bold text-sm text-zinc-800 dark:text-zinc-200">{title}</span>
-    </div>
-  )
-}
-
-function Check({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 12 12" fill="none">
-      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function StepNav({ onBack, onNext }: { onBack?: () => void; onNext: () => void }) {
-  return (
-    <div className="flex gap-3">
-      {onBack && (
-        <button onClick={onBack}
-          className="flex items-center gap-2 px-5 h-12 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all">
+  if (showForm) {
+    return (
+      <div className="container-main py-10 pb-24">
+        <button onClick={() => setShowForm(false)}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-700 mb-8 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-      )}
-      <button onClick={onNext}
-        className={cn(
-          'flex-1 h-12 rounded-xl font-semibold text-sm text-white',
-          'bg-gradient-brand hover:opacity-90 active:scale-[0.98]',
-          'shadow-brand transition-all duration-200',
-          'flex items-center justify-center gap-2',
-          'overflow-hidden shine relative'
-        )}>
-        Continue →
-      </button>
+
+        <div className="max-w-[560px] mx-auto">
+          <div className="gl rounded-[32px] p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                style={{ background: 'linear-gradient(135deg,rgba(228,0,43,0.10),rgba(228,0,43,0.04))', border: '1px solid rgba(228,0,43,0.14)' }}>
+                🏪
+              </div>
+              <div>
+                <h2 className="font-display text-2xl font-bold text-zinc-900">Apply to Sell</h2>
+                <p className="text-sm text-zinc-400">We review applications within 48 hours</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleApply} className="space-y-4">
+              <div>
+                <label className="label">Business / Store Name</label>
+                <input className="input" required placeholder="Seoul Beauty Co."
+                  value={form.businessName} onChange={e => setForm(f => ({ ...f, businessName: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Email Address</label>
+                  <input className="input" type="email" required placeholder="seller@business.com"
+                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Phone Number</label>
+                  <input className="input" required placeholder="+82 10 1234 5678"
+                    value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="label">Your Country</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: 'KR' as const, label: '🇰🇷 Korea',      desc: 'Korean seller' },
+                    { id: 'UZ' as const, label: '🇺🇿 Uzbekistan', desc: 'Uzbek seller' },
+                  ].map(opt => (
+                    <button key={opt.id} type="button" onClick={() => setForm(f => ({ ...f, country: opt.id }))}
+                      className={cn('p-3.5 rounded-2xl text-left transition-all', form.country === opt.id ? 'ring-2 ring-red-500' : '')}
+                      style={{
+                        background: form.country === opt.id ? 'rgba(228,0,43,0.07)' : 'rgba(255,255,255,0.60)',
+                        backdropFilter: 'blur(16px)',
+                        border: form.country === opt.id ? '1px solid rgba(228,0,43,0.20)' : '1px solid rgba(255,255,255,0.78)',
+                      }}>
+                      <p className="text-sm font-bold text-zinc-800">{opt.label}</p>
+                      <p className="text-xs text-zinc-400">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="label">Tell us about your business (optional)</label>
+                <textarea className="input h-28 py-3 resize-none" placeholder="What products do you sell? What makes them unique?"
+                  value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold disabled:opacity-60">
+                {loading
+                  ? <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  : <><Store className="h-4 w-4" />Submit Application</>
+                }
+              </button>
+
+              <p className="text-center text-xs text-zinc-400">
+                By applying, you agree to our <a href="#" className="underline hover:text-zinc-600">Seller Terms</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="pb-24">
+      {/* Hero */}
+      <section className="container-main pt-8 pb-6">
+        <div className="hero-banner relative rounded-[32px] px-8 sm:px-14 py-14 text-center overflow-hidden">
+          <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-[120px] opacity-[0.07] pointer-events-none select-none animate-drift">🛒</div>
+          <div className="absolute -right-16 top-1/2 -translate-y-1/2 text-[100px] opacity-[0.07] pointer-events-none select-none animate-drift" style={{ animationDelay: '5s' }}>📦</div>
+
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-6 text-[11px] font-bold text-white"
+              style={{ background: 'rgba(255,255,255,0.16)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.24)' }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Now accepting sellers from Korea & Uzbekistan
+            </div>
+            <h1 className="font-display font-bold text-white text-balance mb-5"
+              style={{ fontSize: 'clamp(28px, 5vw, 52px)', letterSpacing: '-1px' }}>
+              Grow Your Business<br />Across Borders
+            </h1>
+            <p className="text-base text-white/65 max-w-[500px] mx-auto mb-8 leading-relaxed">
+              Join 200+ sellers on KorUzMarket and reach thousands of customers in Korea and Uzbekistan. Free to start, zero listing fees.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button onClick={() => setShowForm(true)}
+                className="inline-flex items-center gap-2.5 h-13 px-8 rounded-full text-sm font-bold text-zinc-900 transition-all hover:-translate-y-0.5"
+                style={{ background: 'rgba(255,255,255,0.92)', boxShadow: '0 8px 28px rgba(0,0,0,0.18)', height: 52 }}>
+                <Store className="h-4.5 w-4.5" />
+                Apply to Sell Free
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button className="inline-flex items-center gap-2 h-12 px-6 rounded-full text-sm font-semibold text-white/80 hover:text-white transition-all"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.22)' }}>
+                Learn More
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="container-main">
+        <div className="gl rounded-[24px] px-6 py-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 text-center">
+            {[
+              { value: '200+',   label: 'Active Sellers'   },
+              { value: '50K+',   label: 'Customers'        },
+              { value: '0%',     label: 'Listing Fees'     },
+              { value: '48hr',   label: 'Approval Time'    },
+            ].map(({ value, label }, i) => (
+              <div key={label} className="animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
+                <p className="font-display text-2xl font-bold text-gradient-brand">{value}</p>
+                <p className="text-xs font-semibold text-zinc-400 mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits */}
+      <section className="container-main">
+        <h2 className="font-display text-3xl font-bold text-zinc-900 mb-2 text-center">Why Sell on KorUzMarket?</h2>
+        <p className="text-sm text-zinc-400 text-center mb-8">Everything you need to succeed in cross-border commerce</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {BENEFITS.map(({ icon: Icon, title, desc }, i) => (
+            <div key={title} className="gl-card rounded-[24px] p-6 animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                style={{ background: 'rgba(228,0,43,0.08)', border: '1px solid rgba(228,0,43,0.12)' }}>
+                <Icon className="h-5.5 w-5.5 text-red-500" />
+              </div>
+              <h3 className="font-display text-lg font-bold text-zinc-900 mb-2">{title}</h3>
+              <p className="text-sm text-zinc-500 leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="container-main">
+        <h2 className="font-display text-3xl font-bold text-zinc-900 mb-2 text-center">Seller Stories</h2>
+        <p className="text-sm text-zinc-400 text-center mb-8">Hear from our top sellers</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {TESTIMONIALS.map(({ name, country, stars, text }, i) => (
+            <div key={name} className="gl rounded-[24px] p-6 animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
+              <div className="flex mb-3">
+                {[1,2,3,4,5].map(s => (
+                  <span key={s} className={s <= stars ? 'text-amber-400' : 'text-zinc-200'}>★</span>
+                ))}
+              </div>
+              <p className="text-sm text-zinc-600 leading-relaxed mb-4">"{text}"</p>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg,#E4002B,#0052A2)' }}>
+                  {name[0]}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-800">{name}</p>
+                  <p className="text-xs text-zinc-400">{country} Seller</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="container-main">
+        <div className="gl rounded-[32px] p-10 sm:p-14 text-center">
+          <h2 className="font-display text-3xl font-bold text-zinc-900 mb-3">
+            Ready to Start Selling?
+          </h2>
+          <p className="text-sm text-zinc-400 mb-7 max-w-sm mx-auto">
+            Join KorUzMarket today. Free registration, zero listing fees, and a dedicated support team.
+          </p>
+          <button onClick={() => setShowForm(true)}
+            className="btn-brand h-13 px-10 inline-flex items-center gap-2.5 text-sm font-bold"
+            style={{ height: 52 }}>
+            <Store className="h-4.5 w-4.5" />
+            Apply to Sell — It's Free
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
     </div>
   )
 }
