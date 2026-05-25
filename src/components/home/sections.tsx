@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, ShieldCheck, RotateCcw, Truck, Tag } from 'lucide-react'
+import { ArrowRight, ShieldCheck, RotateCcw, Truck, Users, Package, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES, CATEGORIES } from '@/config'
 import { ProductGrid } from '@/components/product/product-grid'
-import { useFeaturedProducts } from '@/hooks'
+import { useFeaturedProducts, useNewProducts } from '@/hooks'
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 export function Hero() {
@@ -147,6 +147,84 @@ export function FeaturedSection() {
         </Link>
       </div>
       <ProductGrid products={data} loading={isLoading} skeletons={8} columns={4} />
+    </section>
+  )
+}
+
+// ─── New Arrivals ──────────────────────────────────────────────────────────────
+export function NewArrivalsSection() {
+  const { data, isLoading } = useNewProducts()
+  return (
+    <section className="container-main">
+      <div className="flex items-baseline justify-between mb-5">
+        <h2 className="font-display text-2xl font-bold text-zinc-900">New Arrivals</h2>
+        <Link href={ROUTES.products} className="text-sm font-bold text-cobalt-500 hover:text-cobalt-600 transition-colors flex items-center gap-1">
+          View all <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+      <ProductGrid products={data} loading={isLoading} skeletons={8} columns={4} />
+    </section>
+  )
+}
+
+// ─── Stats Bar ─────────────────────────────────────────────────────────────────
+export function StatsBar() {
+  const stats = [
+    { icon: Package, value: '10,000+', label: 'Products',        color: 'text-cobalt-500' },
+    { icon: Users,   value: '50,000+', label: 'Happy Customers', color: 'text-emerald-500' },
+    { icon: Star,    value: '4.9 / 5', label: 'Average Rating',  color: 'text-amber-500' },
+    { icon: Truck,   value: '7–14',    label: 'Days Delivery',   color: 'text-brand-500' },
+  ]
+  return (
+    <section className="container-main">
+      <div className="gl rounded-3xl px-6 py-6">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          {stats.map(({ icon: Icon, value, label, color }, i) => (
+            <div key={label} className="flex flex-col items-center text-center gap-2 animate-fade-up" style={{ animationDelay: `${i * 60}ms` }}>
+              <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', color)}
+                style={{ background: 'rgba(255,255,255,0.8)', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid rgba(255,255,255,0.9)' }}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="font-display text-2xl font-bold text-zinc-900">{value}</div>
+              <div className="text-xs text-zinc-500 font-medium">{label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Origin Cards ──────────────────────────────────────────────────────────────
+export function OriginCards() {
+  return (
+    <section className="container-main">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link href={ROUTES.origin('KR')}>
+          <div className="gl-dark rounded-3xl px-8 py-10 flex items-center gap-5 group cursor-pointer hover:scale-[1.01] transition-transform duration-200">
+            <span className="text-5xl" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.40))' }}>🇰🇷</span>
+            <div className="relative z-10">
+              <div className="font-display text-2xl font-bold text-white mb-1">Korean Products</div>
+              <div className="text-sm text-white/55">K-beauty, food, electronics & more</div>
+              <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 group-hover:text-white transition-colors">
+                Shop now <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+        </Link>
+        <Link href={ROUTES.origin('UZ')}>
+          <div className="gl-dark rounded-3xl px-8 py-10 flex items-center gap-5 group cursor-pointer hover:scale-[1.01] transition-transform duration-200">
+            <span className="text-5xl" style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.40))' }}>🇺🇿</span>
+            <div className="relative z-10">
+              <div className="font-display text-2xl font-bold text-white mb-1">Uzbek Products</div>
+              <div className="text-sm text-white/55">Dried fruits, crafts, textiles & more</div>
+              <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white/80 group-hover:text-white transition-colors">
+                Shop now <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
     </section>
   )
 }
