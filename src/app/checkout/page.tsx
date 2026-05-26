@@ -81,21 +81,26 @@ export default function CheckoutPage() {
     try {
       const res = await ordersApi.create({
         items: items.map(i => ({
-          id: i.productId, productId: i.productId,
-          product: i.product, quantity: i.quantity,
-          unitPrice: i.product.priceUZS,
-          currency,
-        })) as any,
-        deliveryAddress: address,
-        paymentMethod:   'unired' as any,
-        subtotal, deliveryFee: DELIVERY, discount: 0,
-        total, currency,
+          productId: i.productId,
+          quantity:  i.quantity,
+        })),
+        shippingAddress: {
+          fullName:    address.recipientName,
+          phoneNumber: address.phone,
+          region:      address.region || address.city,
+          city:        address.city,
+          addressLine: [address.street, address.apartment].filter(Boolean).join(', '),
+          notes:       address.notes,
+        },
+        paymentMethod: 'UNIRED',
       })
-      if (res.success) {
-        const newOrderId = (res.data as any)?.id ?? `ORD-${Date.now()}`
+      if (res.success && res.data) {
+        const newOrderId = res.data.id ?? `ORD-${Date.now()}`
         setOrderId(newOrderId)
         clearCart()
         setStep(2)
+      } else {
+        toast.error(res.error ?? 'Failed to place order. Please try again.')
       }
     } catch {
       toast.error('Something went wrong. Please try again.')

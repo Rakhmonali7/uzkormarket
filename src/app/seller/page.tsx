@@ -1,15 +1,20 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Package, Plus, ImagePlus, Tag, DollarSign, AlignLeft,
   ChevronDown, Store, Layers, BarChart2, ShoppingBag,
-  CheckCircle2, X, ArrowLeft, Truck, Globe, Star
+  CheckCircle2, X, ArrowLeft, Truck, Globe, Star, RefreshCw
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
 import { CATEGORIES } from '@/config'
+import { sellerApi } from '@/lib/api/client'
+import { useAuthStore } from '@/store'
+import { Spinner } from '@/components/ui'
 import toast from 'react-hot-toast'
+import type { Product, Order } from '@/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ProductForm {
@@ -43,20 +48,31 @@ const TABS = [
   { id: 'analytics', label: 'Analytics',    icon: BarChart2 },
 ]
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const MOCK_PRODUCTS = [
-  { id: '1', title: 'Korean Ginseng Extract 100ml', category: 'health', origin: 'KR', priceUZS: 180000, stock: 23, sold: 41, status: 'active' as const },
-  { id: '2', title: 'Uzbek Dried Apricots 500g',    category: 'food',   origin: 'UZ', priceUZS: 65000,  stock: 58, sold: 12, status: 'active' as const },
-  { id: '3', title: 'K-Beauty Snail Serum 30ml',    category: 'beauty', origin: 'KR', priceUZS: 240000, stock: 0,  sold: 87, status: 'out_of_stock' as const },
-]
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending:            'Pending',
+  paid:               'Paid',
+  processing:         'Processing',
+  shipped:            'Shipped',
+  delivered:          'Delivered',
+  cancelled:          'Cancelled',
+  refunded:           'Refunded',
+}
 
 export default function SellerPage() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState<string>('products')
-  const [form,      setForm]      = useState<ProductForm>(EMPTY_FORM)
+  const router       = useRouter()
+  const qc           = useQueryClient()
+  const { isAuthed } = useAuthStore()
+
+  const [activeTab,  setActiveTab]  = useState<string>('products')
+  const [form,       setForm]       = useState<ProductForm>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
-  const [step,      setStep]      = useState<0|1|2>(0) // form wizard steps
+  const [step,       setStep]       = useState<0|1|2>(0)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthed) router.replace('/auth')
+  }, [isAuthed, router])
 
   function setF<K extends keyof ProductForm>(key: K, val: ProductForm[K]) {
     setForm(f => ({ ...f, [key]: val }))
@@ -68,20 +84,83 @@ export default function SellerPage() {
     setF('images', [...form.images, ...arr])
   }
 
+  // ── Seller products query ─────────────────────────────────────────────────
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useQuery({
+    queryKey: ['seller', 'products'],
+    queryFn:  () => sellerApi.getProducts(1, 50),
+    enabled:  isAuthed,
+  })
+
+  // ── Seller orders query ───────────────────────────────────────────────────
+  const {
+    data: ordersData,
+    isLoading: ordersLoading,
+    refetch: refetchOrders,
+  } = useQuery({
+    queryKey: ['seller', 'orders'],
+    queryFn:  () => sellerApi.getOrders(1, 50),
+    enabled:  isAuthed && activeTab === 'orders',
+  })
+
+  const myProducts = productsData?.data ?? []
+  const myOrders   = ordersData?.data   ?? []
+
+  // ── Seller profile query (for analytics) ─────────────────────────────────
+  const { data: profileRes } = useQuery({
+    queryKey: ['seller', 'profile'],
+    queryFn:  sellerApi.getProfile,
+    enabled:  isAuthed && activeTab === 'analytics',
+  })
+  const sellerProfile = profileRes?.success ? profileRes.data : null
+
   async function handleSubmit() {
     if (!form.titleEn || !form.category || !form.origin || !form.priceUZS) {
       toast.error('Please fill in all required fields')
       return
     }
+    if (!form.priceKRW) {
+      toast.error('Please enter the price in KRW')
+      return
+    }
     setSubmitting(true)
-    // TODO: POST to /api/seller/products with FormData
-    await new Promise(r => setTimeout(r, 1400))
-    toast.success('Product listed successfully! 🎉')
-    setForm(EMPTY_FORM)
-    setStep(0)
-    setActiveTab('products')
-    setSubmitting(false)
+    try {
+      const tags = form.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+
+      const res = await sellerApi.createProduct({
+        title:         form.titleEn,
+        description:   form.description,
+        category:      form.category,
+        priceUZS:      Number(form.priceUZS),
+        priceKRW:      Number(form.priceKRW),
+        stockQuantity: Number(form.stockQty) || 0,
+        origin:        form.origin,
+        tags,
+      })
+
+      if (!res.success) {
+        toast.error(res.error ?? 'Failed to create product')
+        return
+      }
+
+      toast.success('Product submitted for review! 🎉')
+      setForm(EMPTY_FORM)
+      setStep(0)
+      setActiveTab('products')
+      qc.invalidateQueries({ queryKey: ['seller', 'products'] })
+    } finally {
+      setSubmitting(false)
+    }
   }
+
+  if (!isAuthed) return null
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-surface-950">
@@ -104,12 +183,19 @@ export default function SellerPage() {
               </div>
             </div>
 
-            {/* Stats pills */}
+            {/* Live stats pills */}
             <div className="ml-auto hidden sm:flex items-center gap-3">
               {[
-                { label: 'Products', value: '3', color: 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-400' },
-                { label: 'Orders',   value: '12', color: 'bg-cobalt-50 text-cobalt-700 dark:bg-cobalt-950/30 dark:text-cobalt-400' },
-                { label: 'Revenue',  value: '₩2.4M', color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
+                {
+                  label: 'Products',
+                  value: String(productsData?.total ?? myProducts.length),
+                  color: 'bg-brand-50 text-brand-700 dark:bg-brand-900/20 dark:text-brand-400',
+                },
+                {
+                  label: 'Orders',
+                  value: String(ordersData?.total ?? 0),
+                  color: 'bg-cobalt-50 text-cobalt-700 dark:bg-cobalt-950/30 dark:text-cobalt-400',
+                },
               ].map(s => (
                 <span key={s.label} className={cn('rounded-full px-3 py-1 text-xs font-bold', s.color)}>
                   {s.value} {s.label}
@@ -143,56 +229,92 @@ export default function SellerPage() {
           <div className="space-y-4 animate-fade-up">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">My Products</h2>
-              <button onClick={() => setActiveTab('add')}
-                className={cn(
-                  'flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-semibold text-white',
-                  'bg-gradient-brand shadow-brand hover:opacity-90 active:scale-95 transition-all',
-                  'overflow-hidden shine relative'
-                )}>
-                <Plus className="h-4 w-4" /> Add Product
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => refetchProducts()}
+                  className="h-10 w-10 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-700 transition-all"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+                <button onClick={() => setActiveTab('add')}
+                  className={cn(
+                    'flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-semibold text-white',
+                    'bg-gradient-brand shadow-brand hover:opacity-90 active:scale-95 transition-all',
+                    'overflow-hidden shine relative'
+                  )}>
+                  <Plus className="h-4 w-4" /> Add Product
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {MOCK_PRODUCTS.map((p, i) => (
-                <div key={p.id}
-                  className="card-glass p-4 flex items-center gap-4 animate-fade-up"
-                  style={{ animationDelay: `${i * 60}ms` }}>
+            {productsLoading && (
+              <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+            )}
 
-                  {/* Product image placeholder */}
-                  <div className="h-14 w-14 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl bg-zinc-100 dark:bg-zinc-800">
-                    {p.origin === 'KR' ? '🇰🇷' : '🇺🇿'}
-                  </div>
+            {!productsLoading && myProducts.length === 0 && (
+              <div className="card-glass p-10 text-center">
+                <Package className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                <p className="font-semibold text-zinc-600 dark:text-zinc-400">No products yet</p>
+                <p className="text-sm text-zinc-400 mt-1">Click "Add Product" to list your first item</p>
+              </div>
+            )}
 
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.title}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-xs text-zinc-500">{p.category}</span>
-                      <span className="text-xs text-zinc-300 dark:text-zinc-600">·</span>
-                      <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        {p.priceUZS.toLocaleString()} UZS
+            {myProducts.length > 0 && (
+              <div className="space-y-3">
+                {myProducts.map((p, i) => (
+                  <div key={p.id}
+                    className="card-glass p-4 flex items-center gap-4 animate-fade-up"
+                    style={{ animationDelay: `${i * 40}ms` }}>
+
+                    <div className="h-14 w-14 rounded-xl flex-shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                      {p.images[0]?.url ? (
+                        <img
+                          src={p.images[0].url}
+                          alt={p.images[0].altText}
+                          className="w-full h-full object-cover"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">
+                          {p.origin === 'KR' ? '🇰🇷' : '🇺🇿'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                        {p.title.en ?? p.title.uz}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-xs text-zinc-500">{p.category}</span>
+                        <span className="text-xs text-zinc-300 dark:text-zinc-600">·</span>
+                        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          {p.priceUZS.toLocaleString()} UZS
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className={cn(
+                        'text-xs font-bold px-2.5 py-1 rounded-full',
+                        p.status === 'active'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                      )}>
+                        {p.status === 'active' ? `${p.stockQty} in stock` : 'Out of stock'}
                       </span>
+                      <span className="text-xs text-zinc-400">{p.soldCount} sold</span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
 
-                  <div className="hidden sm:flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className={cn(
-                      'text-xs font-bold px-2.5 py-1 rounded-full',
-                      p.status === 'active'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                    )}>
-                      {p.status === 'active' ? `${p.stock} in stock` : 'Out of stock'}
-                    </span>
-                    <span className="text-xs text-zinc-400">{p.sold} sold</span>
-                  </div>
-
-                  <button className="flex-shrink-0 h-8 w-8 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:border-zinc-300 transition-all">
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            {productsError && (
+              <div className="card-glass p-6 text-center text-red-500 text-sm">
+                Failed to load products. Make sure you are logged in as a seller.
+              </div>
+            )}
           </div>
         )}
 
@@ -206,7 +328,7 @@ export default function SellerPage() {
 
             {/* Step progress */}
             <div className="flex items-center gap-2">
-              {['Product Info', 'Pricing & Stock', 'Images & Publish'].map((s, i) => (
+              {['Product Info', 'Pricing & Stock', 'Review & Publish'].map((s, i) => (
                 <div key={s} className="flex items-center gap-2 flex-1 last:flex-none">
                   <div className={cn(
                     'h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all',
@@ -257,7 +379,7 @@ export default function SellerPage() {
                     </div>
                   </div>
 
-                  {/* Titles */}
+                  {/* Title */}
                   <div>
                     <label className="label">Product Name (English) *</label>
                     <input type="text" value={form.titleEn}
@@ -292,7 +414,7 @@ export default function SellerPage() {
                         className="input pl-10 appearance-none">
                         <option value="">Select a category</option>
                         {CATEGORIES.map(c => (
-                          <option key={c.value} value={c.value}>{c.icon} {c.en ?? c.uz}</option>
+                          <option key={c.value} value={c.value}>{c.icon} {c.en}</option>
                         ))}
                       </select>
                       <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
@@ -304,7 +426,7 @@ export default function SellerPage() {
                     <label className="label">Product Description</label>
                     <textarea value={form.description}
                       onChange={e => setF('description', e.target.value)}
-                      placeholder="Describe your product — ingredients, benefits, usage instructions, packaging…"
+                      placeholder="Describe your product — ingredients, benefits, usage instructions…"
                       rows={4}
                       className="input !h-auto py-3 resize-none" />
                     <p className="mt-1 text-xs text-zinc-400">{form.description.length}/2000 characters</p>
@@ -312,19 +434,22 @@ export default function SellerPage() {
 
                   {/* Tags */}
                   <div>
-                    <label className="label">Tags</label>
+                    <label className="label">Tags <span className="text-xs font-normal text-zinc-400">(comma-separated)</span></label>
                     <div className="relative">
                       <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                       <input type="text" value={form.tags}
                         onChange={e => setF('tags', e.target.value)}
-                        placeholder="ginseng, health, organic, natural (separate with commas)"
+                        placeholder="ginseng, health, organic"
                         className="input pl-10" />
                     </div>
                   </div>
                 </div>
 
                 <StepNav onNext={() => {
-                  if (!form.titleEn || !form.category || !form.origin) { toast.error('Please fill in required fields'); return }
+                  if (!form.titleEn || !form.category || !form.origin) {
+                    toast.error('Please fill in required fields')
+                    return
+                  }
                   setStep(1)
                 }} />
               </div>
@@ -348,32 +473,12 @@ export default function SellerPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="label">Price in KRW (₩)</label>
+                      <label className="label">Price in KRW (₩) *</label>
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">₩</span>
                         <input type="number" value={form.priceKRW}
                           onChange={e => setF('priceKRW', e.target.value)}
                           placeholder="15000" min="0"
-                          className="input pl-10" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Original Price UZS <span className="text-xs font-normal text-zinc-400">(before discount)</span></label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">UZS</span>
-                        <input type="number" value={form.originalUZS}
-                          onChange={e => setF('originalUZS', e.target.value)}
-                          placeholder="200000" min="0"
-                          className="input pl-14" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Original Price KRW <span className="text-xs font-normal text-zinc-400">(before discount)</span></label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500">₩</span>
-                        <input type="number" value={form.originalKRW}
-                          onChange={e => setF('originalKRW', e.target.value)}
-                          placeholder="20000" min="0"
                           className="input pl-10" />
                       </div>
                     </div>
@@ -384,7 +489,7 @@ export default function SellerPage() {
                     <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 p-3">
                       <Star className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                       <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                        Discount: <strong>{Math.round((1 - Number(form.priceUZS) / Number(form.originalUZS)) * 100)}% off</strong> — this will show as a badge on your product
+                        Discount: <strong>{Math.round((1 - Number(form.priceUZS) / Number(form.originalUZS)) * 100)}% off</strong>
                       </span>
                     </div>
                   )}
@@ -414,19 +519,21 @@ export default function SellerPage() {
                 </div>
 
                 <StepNav onBack={() => setStep(0)} onNext={() => {
-                  if (!form.priceUZS) { toast.error('Please enter a price'); return }
+                  if (!form.priceUZS || !form.priceKRW) {
+                    toast.error('Please enter prices in both UZS and KRW')
+                    return
+                  }
                   setStep(2)
                 }} />
               </div>
             )}
 
-            {/* ── Step 2: Images & Publish ─────────────────────────── */}
+            {/* ── Step 2: Review & Publish ─────────────────────────── */}
             {step === 2 && (
               <div className="space-y-5">
                 <div className="card-glass p-6 space-y-5">
                   <SectionTitle icon={<ImagePlus className="h-4 w-4" />} title="Product Images" />
 
-                  {/* Image upload area */}
                   <div
                     onClick={() => fileRef.current?.click()}
                     className={cn(
@@ -441,9 +548,9 @@ export default function SellerPage() {
                       Click to upload images
                     </p>
                     <p className="text-xs text-zinc-400 mt-1">PNG, JPG up to 10MB · Up to 8 photos</p>
+                    <p className="text-xs text-amber-500 mt-2">Note: Image upload requires MinIO storage to be configured</p>
                   </div>
 
-                  {/* Image previews */}
                   {form.images.length > 0 && (
                     <div className="grid grid-cols-4 gap-2">
                       {form.images.map((file, i) => (
@@ -464,22 +571,22 @@ export default function SellerPage() {
                     </div>
                   )}
 
-                  {/* Publish checklist */}
+                  {/* Pre-publish checklist */}
                   <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 p-4 space-y-2">
                     <p className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-3">Pre-publish checklist</p>
                     {[
-                      { label: 'Product title (English)',           done: !!form.titleEn },
-                      { label: 'Category selected',                 done: !!form.category },
-                      { label: 'Origin set (KR or UZ)',             done: !!form.origin },
-                      { label: 'Price in UZS',                      done: !!form.priceUZS },
-                      { label: 'Product image uploaded',            done: form.images.length > 0 },
+                      { label: 'Product title (English)',  done: !!form.titleEn   },
+                      { label: 'Category selected',        done: !!form.category  },
+                      { label: 'Origin set (KR or UZ)',    done: !!form.origin    },
+                      { label: 'Price in UZS',             done: !!form.priceUZS  },
+                      { label: 'Price in KRW',             done: !!form.priceKRW  },
                     ].map(item => (
                       <div key={item.label} className="flex items-center gap-2.5">
                         <div className={cn(
                           'h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0',
                           item.done ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-700'
                         )}>
-                          {item.done && <Check className="h-2.5 w-2.5 text-white" />}
+                          {item.done && <CheckIcon className="h-2.5 w-2.5 text-white" />}
                         </div>
                         <span className={cn('text-sm', item.done ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-500')}>
                           {item.label}
@@ -489,7 +596,6 @@ export default function SellerPage() {
                   </div>
                 </div>
 
-                {/* Final submit */}
                 <div className="flex gap-3">
                   <button onClick={() => setStep(1)}
                     className="flex items-center gap-2 px-5 h-12 rounded-xl border-2 border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all">
@@ -521,12 +627,62 @@ export default function SellerPage() {
         {/* ── Orders Tab ───────────────────────────────────────────────── */}
         {activeTab === 'orders' && (
           <div className="animate-fade-up space-y-4">
-            <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Orders</h2>
-            <div className="card-glass p-8 text-center">
-              <ShoppingBag className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-              <p className="font-semibold text-zinc-600 dark:text-zinc-400">Orders will appear here</p>
-              <p className="text-sm text-zinc-400 mt-1">Connect your backend to load real order data</p>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Orders</h2>
+              <button
+                onClick={() => refetchOrders()}
+                className="h-10 w-10 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:text-zinc-700 transition-all"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
             </div>
+
+            {ordersLoading && (
+              <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+            )}
+
+            {!ordersLoading && myOrders.length === 0 && (
+              <div className="card-glass p-8 text-center">
+                <ShoppingBag className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                <p className="font-semibold text-zinc-600 dark:text-zinc-400">No orders yet</p>
+                <p className="text-sm text-zinc-400 mt-1">Orders for your products will appear here</p>
+              </div>
+            )}
+
+            {myOrders.length > 0 && (
+              <div className="space-y-3">
+                {myOrders.map(order => (
+                  <div key={order.id} className="card-glass p-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
+                          Order #{order.id.slice(-8).toUpperCase()}
+                        </p>
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          {new Date(order.orderedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className={cn(
+                        'text-xs font-bold px-2.5 py-1 rounded-full',
+                        order.status === 'delivered'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : order.status === 'cancelled'
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      )}>
+                        {ORDER_STATUS_LABEL[order.status] ?? order.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      <span>{(order.items ?? []).length} items</span>
+                      <span className="font-bold text-zinc-900 dark:text-white">
+                        {order.total.toLocaleString()} UZS
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -536,9 +692,24 @@ export default function SellerPage() {
             <h2 className="font-display text-2xl font-bold text-zinc-900 dark:text-white">Analytics</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Total Revenue',  value: '₩2,400,000',  sub: '+12% this month',   color: 'from-zinc-800 to-zinc-900' },
-                { label: 'Products Sold',  value: '140',           sub: '3 products listed', color: 'from-cobalt-500 to-cobalt-700' },
-                { label: 'Avg. Rating',    value: '4.8 ★',         sub: 'From 23 reviews',   color: 'from-amber-500 to-orange-600' },
+                {
+                  label: 'Listed Products',
+                  value: String(productsData?.total ?? myProducts.length),
+                  sub:   'Total listings',
+                  color: 'from-zinc-800 to-zinc-900',
+                },
+                {
+                  label: 'Total Orders',
+                  value: String(ordersData?.total ?? 0),
+                  sub:   'All time',
+                  color: 'from-cobalt-500 to-cobalt-700',
+                },
+                {
+                  label: 'Approval Status',
+                  value: sellerProfile?.status ?? 'Check profile',
+                  sub:   sellerProfile ? `Since ${new Date(sellerProfile.created_at ?? Date.now()).getFullYear()}` : 'Login as seller',
+                  color: 'from-amber-500 to-orange-600',
+                },
               ].map((s, i) => (
                 <div key={s.label}
                   className={cn('rounded-2xl bg-gradient-to-br p-5 text-white shadow-card', s.color)}
@@ -552,7 +723,7 @@ export default function SellerPage() {
             <div className="card-glass p-8 text-center">
               <BarChart2 className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
               <p className="font-semibold text-zinc-600 dark:text-zinc-400">Detailed analytics coming soon</p>
-              <p className="text-sm text-zinc-400 mt-1">Connect backend to display charts</p>
+              <p className="text-sm text-zinc-400 mt-1">Revenue charts and conversion metrics will be shown here</p>
             </div>
           </div>
         )}
@@ -573,7 +744,7 @@ function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string })
   )
 }
 
-function Check({ className }: { className?: string }) {
+function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 12 12" fill="none">
       <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

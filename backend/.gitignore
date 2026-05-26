@@ -1,0 +1,40 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local infra state
+nginx/certs/*
+!nginx/certs/.gitkeep
+!nginx/certs/README.md
+nginx/logs/
+prometheus/data/
+grafana/data/
+
+# Logs
+*.log
+logs/
+.cursor/

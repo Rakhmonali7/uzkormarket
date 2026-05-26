@@ -71,5 +71,7 @@ export const ORDER_STATUS: Record<string, { en: string; uz: string }> = {
 }
 
 // ─── API ──────────────────────────────────────────────────────────────────────
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api'
+// Default to /api/v1 which is proxied to the backend by next.config.js rewrites.
+// In production set NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api/v1
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'
 export const USE_REAL_API  = process.env.NEXT_PUBLIC_USE_REAL_API === 'true'
