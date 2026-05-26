@@ -1,13 +1,15 @@
 {
   "name": "koruzmarket",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "description": "KorUzMarket — Korean & Uzbek cross-border marketplace. Next.js 14, TypeScript, Tailwind CSS, Zustand, React Query.",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out"
   },
   "dependencies": {
     "next": "14.2.0",
