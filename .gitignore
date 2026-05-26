@@ -27,3 +27,6 @@ Thumbs.db
 
 # misc
 coverage/
+
+# backend lives in its own separate repo
+backend/
