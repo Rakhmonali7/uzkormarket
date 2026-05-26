@@ -11,6 +11,7 @@ yarn-error.log*
 # build
 dist/
 build/
+.next/
 
 # env files
 .env
