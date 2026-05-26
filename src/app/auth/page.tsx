@@ -7,13 +7,14 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Sparkles, ArrowRight } from '
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store'
 import { ROUTES } from '@/config'
+import { authApi } from '@/lib/api/client'
 import toast from 'react-hot-toast'
 
 type Mode = 'login' | 'register' | 'forgot'
 
 export default function AuthPage() {
-  const router = useRouter()
-  const { setAuth } = useAuthStore()
+  const router        = useRouter()
+  const { setAuth }   = useAuthStore()
 
   const [mode,        setMode]        = useState<Mode>('login')
   const [showPass,    setShowPass]    = useState(false)
@@ -24,6 +25,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [confirm,  setConfirm]  = useState('')
   const [name,     setName]     = useState('')
+  const [phone,    setPhone]    = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -32,22 +34,42 @@ export default function AuthPage() {
 
     try {
       if (mode === 'register') {
-        if (password !== confirm) { toast.error('Passwords do not match'); return }
-        if (password.length < 6) { toast.error('Password must be at least 6 characters'); return }
-        // TODO: connect to backend /api/auth/register
-        // const res = await fetch('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) })
-        toast.success('Account created! Please check your email to verify.')
+        if (password !== confirm) {
+          toast.error('Passwords do not match')
+          return
+        }
+        if (password.length < 8) {
+          toast.error('Password must be at least 8 characters')
+          return
+        }
+
+        const res = await authApi.register(email, password, name, phone || undefined)
+        if (!res.success) {
+          toast.error(res.error ?? 'Registration failed. Please try again.')
+          return
+        }
+
+        toast.success('Account created! You can now sign in.')
         setMode('login')
+        setPassword('')
+        setConfirm('')
+
       } else if (mode === 'login') {
-        // TODO: connect to backend /api/auth/login
-        // const res = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
-        // Mock success for now:
-        setAuth({ id: '1', email, name: email.split('@')[0], role: 'buyer', isVerified: true } as any, 'mock-token')
-        toast.success('Welcome back! 👋')
+        const res = await authApi.login(email, password)
+        if (!res.success || !res.data) {
+          toast.error(res.error ?? 'Invalid email or password.')
+          return
+        }
+
+        const { accessToken, refreshToken, user } = res.data
+        setAuth(user, accessToken, refreshToken)
+        toast.success(`Welcome back, ${user.name}!`)
         router.push(ROUTES.home)
+
       } else if (mode === 'forgot') {
-        // TODO: connect to backend /api/auth/forgot-password
-        toast.success('Reset link sent! Check your email.')
+        // Backend does not yet have a forgot-password endpoint.
+        // Show a friendly message and redirect to login.
+        toast.success('If an account exists for this email, a reset link has been sent.')
         setMode('login')
       }
     } finally {
@@ -56,9 +78,9 @@ export default function AuthPage() {
   }
 
   const titles = {
-    login:    { head: 'Welcome back',        sub:  'Sign in to your account' },
-    register: { head: 'Create account',      sub:  'Join KorUzMarket today' },
-    forgot:   { head: 'Reset password',      sub:  'We\'ll send you a reset link' },
+    login:    { head: 'Welcome back',   sub: 'Sign in to your account'  },
+    register: { head: 'Create account', sub: 'Join KorUzMarket today'   },
+    forgot:   { head: 'Reset password', sub: "We'll send you a reset link" },
   }
 
   return (
@@ -134,7 +156,7 @@ export default function AuthPage() {
             {/* Full name — register only */}
             {mode === 'register' && (
               <div>
-                <label className="label">Full Name</label>
+                <label className="label">Full Name *</label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   <input
@@ -148,7 +170,7 @@ export default function AuthPage() {
 
             {/* Email */}
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email Address *</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
@@ -159,11 +181,26 @@ export default function AuthPage() {
               </div>
             </div>
 
+            {/* Phone — register only (optional) */}
+            {mode === 'register' && (
+              <div>
+                <label className="label">Phone Number <span className="text-xs font-normal text-zinc-400">(optional)</span></label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-zinc-400 pointer-events-none">+</span>
+                  <input
+                    type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="998901234567"
+                    className="input pl-8" autoComplete="tel"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Password — login & register */}
             {mode !== 'forgot' && (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="label !mb-0">Password</label>
+                  <label className="label !mb-0">Password *</label>
                   {mode === 'login' && (
                     <button type="button" onClick={() => setMode('forgot')}
                       className="text-xs text-brand-500 hover:text-brand-600 font-semibold transition-colors">
@@ -176,7 +213,7 @@ export default function AuthPage() {
                   <input
                     type={showPass ? 'text' : 'password'}
                     value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder={mode === 'register' ? 'Min. 6 characters' : '••••••••'}
+                    placeholder={mode === 'register' ? 'Min. 8 characters' : '••••••••'}
                     className="input pl-10 pr-10" required autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   />
                   <button type="button" onClick={() => setShowPass(v => !v)}
@@ -190,7 +227,7 @@ export default function AuthPage() {
             {/* Confirm password — register only */}
             {mode === 'register' && (
               <div>
-                <label className="label">Confirm Password</label>
+                <label className="label">Confirm Password *</label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   <input
@@ -225,8 +262,8 @@ export default function AuthPage() {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  {mode === 'login'    ? 'Sign In'        :
-                   mode === 'register' ? 'Create Account' : 'Send Reset Link'}
+                  {mode === 'login'    ? 'Sign In'         :
+                   mode === 'register' ? 'Create Account'  : 'Send Reset Link'}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}

@@ -109,28 +109,45 @@ export const useUIStore = create<UIState>()(
 
 // ─── Auth Store ───────────────────────────────────────────────────────────────
 interface AuthState {
-  user:     User | null
-  token:    string | null
-  isAuthed: boolean
-  setAuth:    (user: User, token: string) => void
-  clearAuth:  () => void
-  updateUser: (partial: Partial<User>) => void
+  user:         User | null
+  token:        string | null
+  refreshToken: string | null
+  isAuthed:     boolean
+  setAuth:        (user: User, accessToken: string, refreshToken?: string) => void
+  clearAuth:      () => void
+  updateUser:     (partial: Partial<User>) => void
+  setTokens:      (accessToken: string, refreshToken: string) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user:     null,
-      token:    null,
-      isAuthed: false,
-      setAuth(user, token) { set({ user, token, isAuthed: true }) },
-      clearAuth()          { set({ user: null, token: null, isAuthed: false }) },
-      updateUser(partial)  { set(s => ({ user: s.user ? { ...s.user, ...partial } : null })) },
+      user:         null,
+      token:        null,
+      refreshToken: null,
+      isAuthed:     false,
+      setAuth(user, accessToken, refreshToken) {
+        set({ user, token: accessToken, refreshToken: refreshToken ?? null, isAuthed: true })
+      },
+      clearAuth() {
+        set({ user: null, token: null, refreshToken: null, isAuthed: false })
+      },
+      updateUser(partial) {
+        set(s => ({ user: s.user ? { ...s.user, ...partial } : null }))
+      },
+      setTokens(accessToken, refreshToken) {
+        set({ token: accessToken, refreshToken })
+      },
     }),
     {
       name:       'kum-auth',
       storage:    createJSONStorage(() => localStorage),
-      partialize: s => ({ user: s.user, token: s.token, isAuthed: s.isAuthed }),
+      partialize: s => ({
+        user:         s.user,
+        token:        s.token,
+        refreshToken: s.refreshToken,
+        isAuthed:     s.isAuthed,
+      }),
     }
   )
 )

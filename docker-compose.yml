@@ -1,0 +1,230 @@
+# =============================================================================
+# KorUzMarket — Full stack (frontend + backend)
+#
+# Quick start:
+#   cp backend/.env.example backend/.env
+#   cp .env.local.example .env.local
+#   # Edit backend/.env: set JWT_SECRET_KEY, optionally SMTP_* and payment keys
+#   docker compose up -d --build
+#
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000/api/v1/docs
+# MinIO console: http://localhost:9001 (admin / minioadmin123)
+# Grafana: http://localhost:3001 (admin / admin)
+# =============================================================================
+
+name: koruzmarket
+
+services:
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: koruzmarket-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: /api/v1
+      NEXT_PUBLIC_USE_REAL_API: "true"
+      BACKEND_URL: http://api:8000
+      NEXT_PUBLIC_MINIO_URL: http://localhost:9000
+      NEXT_PUBLIC_MINIO_BUCKET: product-images
+    depends_on:
+      - api
+    networks:
+      - koruzmarket-net
+
+  # ── Backend API ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: koruzmarket-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: development
+      PYTHONPATH: /app
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://frontend:3000"
+    volumes:
+      - ./backend/api:/app
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --proxy-headers
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - koruzmarket-net
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: koruzmarket-worker
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: development
+      PYTHONPATH: /app
+    volumes:
+      - ./backend/api:/app
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - koruzmarket-net
+
+  # ── Celery Beat ───────────────────────────────────────────────────────────────
+  beat:
+    build:
+      context: ./backend/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: koruzmarket-beat
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: development
+      PYTHONPATH: /app
+    volumes:
+      - ./backend/api:/app
+    command: celery -A workers.celery_app beat --loglevel=info
+    depends_on:
+      - redis
+    networks:
+      - koruzmarket-net
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: koruzmarket-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: koruz
+      POSTGRES_PASSWORD: koruz
+      POSTGRES_DB: koruz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U koruz -d koruz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - koruzmarket-net
+
+  # ── Redis ─────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: koruzmarket-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - koruzmarket-net
+
+  # ── MinIO (object storage) ───────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: koruzmarket-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - koruzmarket-net
+
+  # Bootstrap MinIO buckets
+  minio-init:
+    image: minio/mc:latest
+    container_name: koruzmarket-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        mc alias set local http://minio:9000 minioadmin minioadmin123
+        mc mb --ignore-existing local/seller-documents
+        mc mb --ignore-existing local/product-images
+        mc anonymous set none     local/seller-documents
+        mc anonymous set download local/product-images
+        echo "MinIO buckets ready."
+    networks:
+      - koruzmarket-net
+    restart: "no"
+
+  # ── Run database migrations on startup ──────────────────────────────────────
+  migrate:
+    build:
+      context: ./backend/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: koruzmarket-migrate
+    env_file:
+      - ./backend/.env
+    environment:
+      PYTHONPATH: /app
+    volumes:
+      - ./backend/api:/app
+    command: alembic upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - koruzmarket-net
+    restart: "no"
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+
+networks:
+  koruzmarket-net:
+    driver: bridge

@@ -11,6 +11,7 @@ yarn-error.log*
 # build
 dist/
 build/
+.next/
 
 # env files
 .env
@@ -27,3 +28,6 @@ Thumbs.db
 
 # misc
 coverage/
+
+# backend lives in its own separate repo
+backend/

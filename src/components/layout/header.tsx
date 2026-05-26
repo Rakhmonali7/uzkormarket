@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Search, ShoppingCart, User, Menu, Sun, Moon,
   ChevronDown, X, Store, ArrowRight, Home,
-  Package, ShoppingBag,
+  Package, ShoppingBag, LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES, CATEGORIES } from '@/config'
@@ -14,7 +14,7 @@ import { useCartStore } from '@/store'
 import { useUIStore }   from '@/store'
 import { useAuthStore } from '@/store'
 import { useLocale, useTranslations } from '@/hooks'
-import { productsApi }  from '@/lib/api/client'
+import { productsApi, authApi }  from '@/lib/api/client'
 
 // ─── Mobile Menu ─────────────────────────────────────────────────────────────
 function MobileMenu() {
@@ -166,16 +166,27 @@ export function Header() {
 
   const totalItems = useCartStore(s => s.totalItems)
   const { theme, setTheme, cartOpen, setCartOpen, setMobileMenuOpen } = useUIStore()
-  const { isAuthed } = useAuthStore()
+  const { isAuthed, user, refreshToken, clearAuth } = useAuthStore()
 
   const [scrolled,    setScrolled]    = useState(false)
   const [query,       setQuery]       = useState('')
   const [suggests,    setSuggests]    = useState<string[]>([])
   const [showLang,    setShowLang]    = useState(false)
+  const [showUser,    setShowUser]    = useState(false)
   const [searchFocus, setSearchFocus] = useState(false)
 
   const searchRef = useRef<HTMLInputElement>(null)
   const langRef   = useRef<HTMLDivElement>(null)
+  const userRef   = useRef<HTMLDivElement>(null)
+
+  async function handleLogout() {
+    setShowUser(false)
+    if (refreshToken) {
+      await authApi.logout(refreshToken).catch(() => {})
+    }
+    clearAuth()
+    router.push(ROUTES.home)
+  }
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 4)
@@ -195,6 +206,7 @@ export function Header() {
   useEffect(() => {
     const fn = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) setShowLang(false)
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setShowUser(false)
     }
     document.addEventListener('mousedown', fn)
     return () => document.removeEventListener('mousedown', fn)
@@ -351,13 +363,48 @@ export function Header() {
               </Link>
 
               {/* Account */}
-              <Link
-                href={isAuthed ? ROUTES.account : ROUTES.login}
-                className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-                aria-label={tr('my_account')}
-              >
-                <User className="h-4 w-4" />
-              </Link>
+              {isAuthed ? (
+                <div ref={userRef} className="relative hidden sm:block">
+                  <button
+                    onClick={() => setShowUser(v => !v)}
+                    className="flex items-center gap-1.5 h-9 px-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                    aria-label={tr('my_account')}
+                  >
+                    <div className="h-6 w-6 rounded-full bg-[#1C1C1E] dark:bg-zinc-700 flex items-center justify-center text-white text-xs font-bold">
+                      {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                    </div>
+                    <ChevronDown className={cn('h-3 w-3 transition-transform', showUser && 'rotate-180')} />
+                  </button>
+                  {showUser && (
+                    <div className="absolute right-0 top-full mt-1.5 z-50 animate-scale-in min-w-[180px] rounded-2xl border border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-card-lg overflow-hidden">
+                      <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{user?.name}</p>
+                        <p className="text-xs text-zinc-400 truncate">{user?.email}</p>
+                      </div>
+                      <Link href={ROUTES.account} onClick={() => setShowUser(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <Package className="h-4 w-4 text-zinc-400" /> My Orders
+                      </Link>
+                      <Link href={ROUTES.seller} onClick={() => setShowUser(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <Store className="h-4 w-4 text-zinc-400" /> Seller Dashboard
+                      </Link>
+                      <button onClick={handleLogout}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors border-t border-zinc-100 dark:border-zinc-800">
+                        <LogOut className="h-4 w-4" /> Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={ROUTES.login}
+                  className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                  aria-label={tr('my_account')}
+                >
+                  <User className="h-4 w-4" />
+                </Link>
+              )}
 
               {/* Cart */}
               <button
