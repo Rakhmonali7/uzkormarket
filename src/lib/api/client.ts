@@ -68,8 +68,7 @@ export const productsApi = {
       const q = filters.search.toLowerCase()
       results = results.filter(p =>
         p.title.uz.toLowerCase().includes(q) ||
-        p.title.ru.toLowerCase().includes(q) ||
-        p.title.ko.toLowerCase().includes(q) ||
+        (p.title.en ?? '').toLowerCase().includes(q) ||
         p.tags.some(t => t.includes(q))
       )
     }
@@ -140,7 +139,7 @@ export const productsApi = {
       PRODUCTS
         .filter(p =>
           p.title.uz.toLowerCase().includes(q) ||
-          p.title.ru.toLowerCase().includes(q)
+          (p.title.en ?? '').toLowerCase().includes(q)
         )
         .slice(0, 6)
         .map(p => p.title.uz),

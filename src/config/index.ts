@@ -21,26 +21,26 @@ export const ROUTES = {
 export const LOCALES = [
   { value: 'en' as Locale, label: 'English', flag: '🌐' },
   { value: 'uz' as Locale, label: "O'zbek",  flag: '🇺🇿' },
-  { value: 'ko' as Locale, label: '한국어',   flag: '🇰🇷' },
 ]
 export const DEFAULT_LOCALE: Locale = 'en'
 
-// ─── Categories (with English labels) ────────────────────────────────────────
+// ─── Categories ───────────────────────────────────────────────────────────────
 export const CATEGORIES: {
-  value:   ProductCategory
-  en: string; uz: string; ko: string
-  icon:    string
-  color:   string
+  value: ProductCategory
+  en:    string
+  uz:    string
+  icon:  string
+  color: string
 }[] = [
-  { value: 'beauty',      en: 'Beauty',       uz: 'Kosmetika',    ko: '뷰티',    icon: '✨', color: 'bg-pink-50    dark:bg-pink-900/20'    },
-  { value: 'food',        en: 'Food',         uz: 'Oziq-ovqat',   ko: '식품',    icon: '🍜', color: 'bg-amber-50   dark:bg-amber-900/20'   },
-  { value: 'electronics', en: 'Electronics',  uz: 'Elektronika',  ko: '전자기기', icon: '📱', color: 'bg-blue-50    dark:bg-blue-900/20'    },
-  { value: 'fashion',     en: 'Fashion',      uz: 'Moda',         ko: '패션',    icon: '👗', color: 'bg-purple-50  dark:bg-purple-900/20'  },
-  { value: 'home',        en: 'Home',         uz: 'Uy uchun',     ko: '홈',      icon: '🏠', color: 'bg-green-50   dark:bg-green-900/20'   },
-  { value: 'health',      en: 'Health',       uz: 'Salomatlik',   ko: '건강',    icon: '💊', color: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  { value: 'sports',      en: 'Sports',       uz: 'Sport',        ko: '스포츠',  icon: '⚽', color: 'bg-orange-50  dark:bg-orange-900/20'  },
-  { value: 'kids',        en: "Kids",         uz: 'Bolalar',      ko: '유아동',  icon: '🧸', color: 'bg-yellow-50  dark:bg-yellow-900/20'  },
-  { value: 'crafts',      en: 'Crafts',       uz: 'Hunarmandlik', ko: '공예',    icon: '🎨', color: 'bg-rose-50    dark:bg-rose-900/20'    },
+  { value: 'beauty',      en: 'Beauty',       uz: 'Kosmetika',    icon: '✨', color: 'bg-pink-50    dark:bg-pink-900/20'    },
+  { value: 'food',        en: 'Food',         uz: 'Oziq-ovqat',   icon: '🍜', color: 'bg-amber-50   dark:bg-amber-900/20'   },
+  { value: 'electronics', en: 'Electronics',  uz: 'Elektronika',  icon: '📱', color: 'bg-blue-50    dark:bg-blue-900/20'    },
+  { value: 'fashion',     en: 'Fashion',      uz: 'Moda',         icon: '👗', color: 'bg-purple-50  dark:bg-purple-900/20'  },
+  { value: 'home',        en: 'Home',         uz: 'Uy uchun',     icon: '🏠', color: 'bg-green-50   dark:bg-green-900/20'   },
+  { value: 'health',      en: 'Health',       uz: 'Salomatlik',   icon: '💊', color: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  { value: 'sports',      en: 'Sports',       uz: 'Sport',        icon: '⚽', color: 'bg-orange-50  dark:bg-orange-900/20'  },
+  { value: 'kids',        en: 'Kids',         uz: 'Bolalar',      icon: '🧸', color: 'bg-yellow-50  dark:bg-yellow-900/20'  },
+  { value: 'crafts',      en: 'Crafts',       uz: 'Hunarmandlik', icon: '🎨', color: 'bg-rose-50    dark:bg-rose-900/20'    },
 ]
 
 // ─── Feature Flags ────────────────────────────────────────────────────────────
@@ -48,27 +48,27 @@ export const FEATURES = {
   darkMode:        true,
   wishlist:        true,
   reviews:         true,
-  uniredGateway:   true,   // Active — connect backend API
-  paymeGateway:    false,  // Phase 2
-  clickGateway:    false,  // Phase 2
-  tossGateway:     false,  // Phase 2 (Korea)
-  liveTracking:    false,  // Phase 3
-  recommendations: false,  // Phase 3
-  bnpl:            false,  // Phase 3
+  uniredGateway:   true,
+  paymeGateway:    false,
+  clickGateway:    false,
+  tossGateway:     false,
+  liveTracking:    false,
+  recommendations: false,
+  bnpl:            false,
 } as const
 
 // ─── Order status labels ──────────────────────────────────────────────────────
-export const ORDER_STATUS = {
-  pending:           { uz: "Kutilmoqda",          ru: 'Ожидание',         ko: '대기중'    },
-  payment_confirmed: { uz: "To'lov tasdiqlandi",  ru: 'Оплата подтверждена', ko: '결제완료' },
-  processing:        { uz: "Jarayonda",            ru: 'В обработке',      ko: '처리중'    },
-  packed:            { uz: "Qadoqlandi",           ru: 'Упакован',         ko: '포장완료'  },
-  shipped:           { uz: "Yoʻlda",              ru: 'Отправлен',        ko: '배송중'    },
-  out_for_delivery:  { uz: "Yetkazilmoqda",        ru: 'В пути',           ko: '배달중'    },
-  delivered:         { uz: "Yetkazildi",           ru: 'Доставлен',        ko: '배달완료'  },
-  cancelled:         { uz: "Bekor qilindi",        ru: 'Отменён',          ko: '취소됨'    },
-  returned:          { uz: "Qaytarildi",           ru: 'Возврат',          ko: '반품됨'    },
-} as const
+export const ORDER_STATUS: Record<string, { en: string; uz: string }> = {
+  pending:           { en: 'Pending',           uz: 'Kutilmoqda'            },
+  payment_confirmed: { en: 'Payment Confirmed', uz: "To'lov tasdiqlandi"    },
+  processing:        { en: 'Processing',        uz: 'Jarayonda'             },
+  packed:            { en: 'Packed',            uz: 'Qadoqlandi'            },
+  shipped:           { en: 'Shipped',           uz: "Yo'lda"               },
+  out_for_delivery:  { en: 'Out for Delivery',  uz: 'Yetkazilmoqda'         },
+  delivered:         { en: 'Delivered',         uz: 'Yetkazildi'            },
+  cancelled:         { en: 'Cancelled',         uz: 'Bekor qilindi'         },
+  returned:          { en: 'Returned',          uz: 'Qaytarildi'            },
+}
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api'

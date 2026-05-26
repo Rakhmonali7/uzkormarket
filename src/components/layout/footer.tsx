@@ -1,10 +1,38 @@
+'use client'
+
 import Link from 'next/link'
-import { ArrowRight, Store } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { ROUTES, CATEGORIES } from '@/config'
+import { useLocale, useTranslations } from '@/hooks'
 
 export function Footer() {
+  const { locale } = useLocale()
+  const { tr } = useTranslations()
+
+  const catLabel  = locale === 'uz' ? 'Kategoriyalar' : 'Categories'
+  const linkLabel = locale === 'uz' ? 'Tezkor havolalar' : 'Quick Links'
+  const suppLabel = locale === 'uz' ? 'Yordam' : 'Support'
+
+  const quickLinks = [
+    { href: ROUTES.products,      label: locale === 'uz' ? 'Barcha mahsulotlar' : 'All Products' },
+    { href: ROUTES.origin('KR'),  label: locale === 'uz' ? 'Koreya mahsulotlari' : 'Korean Products' },
+    { href: ROUTES.origin('UZ'),  label: locale === 'uz' ? "O'zbek mahsulotlari" : 'Uzbek Products' },
+    { href: '/seller',            label: locale === 'uz' ? "KorUzMarket'da soting" : 'Sell on KorUzMarket' },
+    { href: ROUTES.account,       label: tr('my_account') },
+    { href: ROUTES.cart,          label: tr('cart') },
+  ]
+
+  const supportLinks = [
+    { href: '#', label: locale === 'uz' ? 'Yordam markazi' : 'Help Center' },
+    { href: '#', label: locale === 'uz' ? "Yetkazish haqida" : 'Shipping Info' },
+    { href: '#', label: locale === 'uz' ? 'Qaytarish siyosati' : 'Returns Policy' },
+    { href: '#', label: locale === 'uz' ? 'Foydalanish shartlari' : 'Terms of Service' },
+    { href: '#', label: locale === 'uz' ? 'Maxfiylik siyosati' : 'Privacy Policy' },
+    { href: '#', label: locale === 'uz' ? 'Biz bilan bog\'lanish' : 'Contact Us' },
+  ]
+
   return (
-    <footer className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-surface-950">
+    <footer className="border-t border-zinc-100 dark:border-zinc-800 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-xl">
       <div className="container-main py-14">
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-4 lg:grid-cols-5">
 
@@ -19,7 +47,10 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xs">
-              Your trusted marketplace for Korean and Uzbek products. Shop across borders with confidence.
+              {locale === 'uz'
+                ? "Koreya va O'zbek mahsulotlari uchun ishonchli bozor. Chegaralar orqali ishonch bilan xarid qiling."
+                : "Your trusted marketplace for Korean and Uzbek products. Shop across borders with confidence."
+              }
             </p>
             <div className="mt-5 flex items-center gap-3">
               <span className="rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
@@ -34,14 +65,14 @@ export function Footer() {
 
           {/* Categories */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Categories</h3>
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{catLabel}</h3>
             <ul className="space-y-2.5">
               {CATEGORIES.slice(0, 6).map(cat => (
                 <li key={cat.value}>
                   <Link href={ROUTES.category(cat.value)}
-                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5">
+                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1.5">
                     <span>{cat.icon}</span>
-                    {cat.en}
+                    {locale === 'uz' ? cat.uz : cat.en}
                   </Link>
                 </li>
               ))}
@@ -50,19 +81,12 @@ export function Footer() {
 
           {/* Quick links */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Quick Links</h3>
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{linkLabel}</h3>
             <ul className="space-y-2.5">
-              {[
-                { href: ROUTES.products, label: 'All Products' },
-                { href: ROUTES.origin('KR'), label: 'Korean Products' },
-                { href: ROUTES.origin('UZ'), label: 'Uzbek Products' },
-                { href: '/seller', label: 'Sell on KorUzMarket' },
-                { href: ROUTES.account, label: 'My Account' },
-                { href: ROUTES.cart, label: 'Cart' },
-              ].map(({ href, label }) => (
+              {quickLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href}
-                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">
+                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                     {label}
                   </Link>
                 </li>
@@ -72,19 +96,12 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Support</h3>
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{suppLabel}</h3>
             <ul className="space-y-2.5">
-              {[
-                { href: '#', label: 'Help Center' },
-                { href: '#', label: 'Shipping Info' },
-                { href: '#', label: 'Returns Policy' },
-                { href: '#', label: 'Terms of Service' },
-                { href: '#', label: 'Privacy Policy' },
-                { href: '#', label: 'Contact Us' },
-              ].map(({ href, label }) => (
-                <li key={href}>
+              {supportLinks.map(({ href, label }) => (
+                <li key={label}>
                   <Link href={href}
-                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">
+                    className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
                     {label}
                   </Link>
                 </li>
@@ -96,10 +113,12 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-zinc-100 dark:border-zinc-800 pt-8 sm:flex-row">
           <p className="text-xs text-zinc-400 dark:text-zinc-500">
-            © {new Date().getFullYear()} KorUzMarket. All rights reserved.
+            © {new Date().getFullYear()} KorUzMarket. {locale === 'uz' ? 'Barcha huquqlar himoyalangan.' : 'All rights reserved.'}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400 dark:text-zinc-500">Payment via</span>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              {locale === 'uz' ? "To'lov:" : 'Payment via'}
+            </span>
             <span className="rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 text-xs font-bold text-cobalt-600 dark:text-cobalt-400">
               Unired
             </span>

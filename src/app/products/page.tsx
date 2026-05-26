@@ -66,11 +66,11 @@ function ProductsPage() {
       {/* Page head */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-stone-900 dark:text-white sm:text-3xl">
+          <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-white sm:text-3xl">
             {pageTitle}
           </h1>
           {data && (
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               {data.total} ta mahsulot topildi
             </p>
           )}
@@ -90,13 +90,13 @@ function ProductsPage() {
             <select
               value={filters.sortBy ?? 'newest'}
               onChange={e => setParam('sort', e.target.value)}
-              className="h-9 appearance-none rounded-xl border border-stone-200 bg-white px-3 pr-8 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 cursor-pointer"
+              className="h-9 appearance-none rounded-xl border border-zinc-200 bg-white px-3 pr-8 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 cursor-pointer"
             >
               {SORT_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
           </div>
         </div>
       </div>
@@ -107,14 +107,14 @@ function ProductsPage() {
           'w-52 flex-shrink-0 space-y-5',
           // Mobile: drawer overlay
           'hidden lg:block',
-          sideOpen && 'fixed inset-y-0 left-0 z-40 w-64 overflow-y-auto bg-white dark:bg-stone-950 p-5 shadow-card-lg block lg:relative lg:inset-auto lg:z-auto lg:w-52 lg:shadow-none lg:p-0'
+          sideOpen && 'fixed inset-y-0 left-0 z-40 w-64 overflow-y-auto bg-white dark:bg-zinc-950 p-5 shadow-card-lg block lg:relative lg:inset-auto lg:z-auto lg:w-52 lg:shadow-none lg:p-0'
         )}>
           {/* Mobile header */}
           {sideOpen && (
             <div className="flex items-center justify-between mb-4 lg:hidden">
-              <span className="font-semibold text-stone-900 dark:text-stone-100">Filtrlar</span>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100">Filtrlar</span>
               <button onClick={() => setSideOpen(false)}>
-                <X className="h-5 w-5 text-stone-500" />
+                <X className="h-5 w-5 text-zinc-500" />
               </button>
             </div>
           )}
@@ -161,7 +161,7 @@ function ProductsPage() {
 
         {/* Mobile sidebar backdrop */}
         {sideOpen && (
-          <div className="fixed inset-0 z-30 bg-stone-950/40 lg:hidden" onClick={() => setSideOpen(false)} />
+          <div className="fixed inset-0 z-30 bg-zinc-950/40 lg:hidden" onClick={() => setSideOpen(false)} />
         )}
 
         {/* Grid */}
@@ -179,7 +179,7 @@ function ProductsPage() {
                     'h-9 w-9 rounded-xl text-sm font-semibold transition-all duration-150',
                     filters.page === p
                       ? 'bg-brand-500 text-white shadow-brand'
-                      : 'border border-stone-200 text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-400 dark:hover:bg-stone-800'
+                      : 'border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800'
                   )}
                 >
                   {p}
@@ -196,7 +196,7 @@ function ProductsPage() {
 function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500">{title}</p>
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">{title}</p>
       <div className="flex flex-col gap-0.5">{children}</div>
     </div>
   )
@@ -210,7 +210,7 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
         'flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-left transition-all duration-150',
         active
           ? 'bg-brand-50 text-brand-700 font-semibold dark:bg-brand-900/25 dark:text-brand-300'
-          : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+          : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'
       )}
     >
       {active && <span className="h-1.5 w-1.5 rounded-full bg-brand-500 flex-shrink-0" />}

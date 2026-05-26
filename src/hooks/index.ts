@@ -8,56 +8,81 @@ import type { LocalizedString, Locale, ProductFilters } from '@/types'
 export function useLocale() {
   const locale    = useUIStore(s => s.locale)
   const setLocale = useUIStore(s => s.setLocale)
-  const current   = LOCALES.find(l => l.value === locale)!
+  const current   = LOCALES.find(l => l.value === locale) ?? LOCALES[0]
 
-  /** Resolve a LocalizedString to the current locale, with fallback */
+  /** Resolve a LocalizedString to the current locale, with fallback chain */
   function t(str: LocalizedString): string {
-    return str[locale] || str.uz || str.ru || Object.values(str)[0] || ''
+    return str[locale] ?? str.en ?? str.uz ?? Object.values(str).find(Boolean) ?? ''
   }
 
   return { locale, setLocale, t, current, LOCALES }
 }
 
 // ─── useTranslations ──────────────────────────────────────────────────────────
-// Central place for all UI strings — extend as you add pages
 const UI_STRINGS: Record<string, Partial<Record<Locale, string>>> = {
-  add_to_cart:        { uz: "Savatga qo'shish",     ru: 'В корзину',         ko: '장바구니' },
-  buy_now:            { uz: 'Hozir sotib olish',     ru: 'Купить сейчас',     ko: '지금 구매' },
-  in_stock:           { uz: 'Mavjud',                ru: 'В наличии',         ko: '재고 있음' },
-  out_of_stock:       { uz: 'Tugagan',               ru: 'Нет в наличии',     ko: '품절' },
-  reviews:            { uz: 'Sharhlar',              ru: 'Отзывы',            ko: '리뷰' },
-  search_placeholder: { uz: 'Mahsulot qidiring…',   ru: 'Поиск…',            ko: '상품 검색…' },
-  cart:               { uz: 'Savat',                 ru: 'Корзина',           ko: '장바구니' },
-  my_account:         { uz: 'Mening hisobim',        ru: 'Мой аккаунт',       ko: '내 계정' },
-  login:              { uz: 'Kirish',                ru: 'Войти',             ko: '로그인' },
-  see_all:            { uz: "Barchasini ko'rish",    ru: 'Смотреть все',      ko: '모두 보기' },
-  featured:           { uz: 'Tanlangan',             ru: 'Избранные',         ko: '추천' },
-  new_arrivals:       { uz: 'Yangi',                 ru: 'Новинки',           ko: '신상품' },
-  bestsellers:        { uz: "Ko'p sotilgan",         ru: 'Хиты продаж',       ko: '베스트셀러' },
-  total:              { uz: 'Jami',                  ru: 'Итого',             ko: '합계' },
-  checkout:           { uz: 'Rasmiylashtirish',      ru: 'Оформить',          ko: '결제' },
-  continue_shopping:  { uz: 'Xarid davom etish',     ru: 'Продолжить',        ko: '쇼핑 계속' },
-  empty_cart:         { uz: "Savat bo'sh",           ru: 'Корзина пуста',     ko: '장바구니 비었음' },
-  from_korea:         { uz: 'Koreyadan',             ru: 'Из Кореи',          ko: '한국에서' },
-  from_uzbekistan:    { uz: "O'zbekistondan",        ru: 'Из Узбекистана',    ko: '우즈베키스탄에서' },
-  free_shipping:      { uz: "Bepul yetkazish",       ru: 'Бесплатная доставка', ko: '무료 배송' },
-  verified_seller:    { uz: 'Tasdiqlangan',          ru: 'Верифицирован',     ko: '인증 판매자' },
-  filter:             { uz: 'Filtr',                 ru: 'Фильтр',            ko: '필터' },
-  sort:               { uz: 'Saralash',              ru: 'Сортировка',        ko: '정렬' },
-  qty:                { uz: 'Miqdor',                ru: 'Количество',        ko: '수량' },
-  days_delivery:      { uz: 'kun yetkazish',         ru: 'дней доставка',     ko: '일 배송' },
-  all_categories:     { uz: 'Barcha',                ru: 'Все категории',     ko: '전체' },
-  save_to_wishlist:   { uz: 'Saqlash',               ru: 'Сохранить',         ko: '찜하기' },
-  place_order:        { uz: "Buyurtma berish",       ru: 'Оформить заказ',    ko: '주문하기' },
-  delivery_address:   { uz: 'Yetkazish manzili',     ru: 'Адрес доставки',    ko: '배송 주소' },
-  payment_method:     { uz: "To'lov usuli",          ru: 'Способ оплаты',     ko: '결제 수단' },
-  order_summary:      { uz: 'Buyurtma xulosasi',     ru: 'Сводка заказа',     ko: '주문 요약' },
+  // Cart & Shopping
+  add_to_cart:        { en: 'Add to Cart',          uz: "Savatga qo'shish"    },
+  buy_now:            { en: 'Buy Now',               uz: 'Hozir sotib olish'   },
+  in_stock:           { en: 'In Stock',              uz: 'Mavjud'              },
+  out_of_stock:       { en: 'Out of Stock',          uz: 'Tugagan'             },
+  cart:               { en: 'Cart',                  uz: 'Savat'               },
+  empty_cart:         { en: 'Cart is empty',         uz: "Savat bo'sh"         },
+  empty_cart_hint:    { en: 'Add items and come back', uz: "Mahsulot qo'shing va qaytib keling" },
+  continue_shopping:  { en: 'Continue Shopping',     uz: 'Xarid davom etish'   },
+  checkout:           { en: 'Checkout',              uz: 'Rasmiylashtirish'    },
+  subtotal:           { en: 'Subtotal',              uz: 'Oraliq summa'        },
+  delivery:           { en: 'Delivery',              uz: 'Yetkazib berish'     },
+  total:              { en: 'Total',                 uz: 'Jami'                },
+  place_order:        { en: 'Place Order',           uz: 'Buyurtma berish'     },
+
+  // Navigation & Account
+  my_account:         { en: 'My Account',            uz: 'Mening hisobim'      },
+  login:              { en: 'Login',                 uz: 'Kirish'              },
+  sell:               { en: 'Sell',                  uz: 'Sotish'              },
+
+  // Product display
+  reviews:            { en: 'Reviews',               uz: 'Sharhlar'            },
+  search_placeholder: { en: 'Search products, brands…', uz: 'Mahsulot qidiring…' },
+  see_all:            { en: 'See All',               uz: "Barchasini ko'rish"  },
+  view_all:           { en: 'View all',              uz: "Barchasini ko'rish"  },
+  featured:           { en: 'Featured',              uz: 'Tanlangan'           },
+  new_arrivals:       { en: 'New Arrivals',          uz: 'Yangi mahsulotlar'   },
+  bestsellers:        { en: 'Bestsellers',           uz: "Ko'p sotilgan"       },
+  from_korea:         { en: 'From Korea',            uz: 'Koreyadan'           },
+  from_uzbekistan:    { en: 'From Uzbekistan',       uz: "O'zbekistondan"      },
+  free_shipping:      { en: 'Free Shipping',         uz: 'Bepul yetkazish'     },
+  verified_seller:    { en: 'Verified Seller',       uz: 'Tasdiqlangan'        },
+
+  // Filters
+  filter:             { en: 'Filter',                uz: 'Filtr'               },
+  sort:               { en: 'Sort',                  uz: 'Saralash'            },
+  qty:                { en: 'Qty',                   uz: 'Miqdor'              },
+  days_delivery:      { en: 'day delivery',          uz: 'kun yetkazish'       },
+  all_categories:     { en: 'All',                   uz: 'Barcha'              },
+  save_to_wishlist:   { en: 'Save',                  uz: 'Saqlash'             },
+
+  // Checkout & Orders
+  delivery_address:   { en: 'Delivery Address',      uz: 'Yetkazish manzili'   },
+  payment_method:     { en: 'Payment Method',        uz: "To'lov usuli"        },
+  order_summary:      { en: 'Order Summary',         uz: 'Buyurtma xulosasi'   },
+
+  // Sections
+  shop_categories:    { en: 'Shop by Category',      uz: "Kategoriya bo'yicha" },
+  featured_products:  { en: 'Featured Products',     uz: 'Tanlangan mahsulotlar' },
+  sell_banner_title:  { en: 'Sell Your Products Here', uz: "Mahsulotlaringizni bu yerda soting" },
+  sell_banner_desc:   { en: 'Are you a seller? Reach thousands of customers. List for free.',
+                        uz: "Sotuvchimisiz? Minglab mijozlarga yeting. Tekin joylashtiring." },
+  open_store:         { en: 'Open Your Store',       uz: "Do'koningizni oching" },
+  browse_products:    { en: 'Browse All Products',   uz: 'Barcha mahsulotlar'  },
+  sale_items:         { en: 'Sale Items',            uz: 'Chegirma mahsulotlar'},
+  product_not_found:  { en: 'No products found',     uz: 'Mahsulot topilmadi'  },
+  change_filters:     { en: 'Try changing your filters', uz: "Filtrlaringizni o'zgartiring" },
 }
 
 export function useTranslations() {
   const locale = useUIStore(s => s.locale)
   function tr(key: keyof typeof UI_STRINGS): string {
-    return UI_STRINGS[key]?.[locale] ?? UI_STRINGS[key]?.uz ?? key as string
+    return UI_STRINGS[key]?.[locale] ?? UI_STRINGS[key]?.en ?? UI_STRINGS[key]?.uz ?? key as string
   }
   return { tr, locale }
 }

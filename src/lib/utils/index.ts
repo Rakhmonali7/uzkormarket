@@ -3,35 +3,31 @@ import { twMerge } from 'tailwind-merge'
 import type { Currency, Locale, Product } from '@/types'
 
 // ─── Class name merger ────────────────────────────────────────────────────────
-// Use everywhere instead of template literals for Tailwind
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 // ─── Price formatting ─────────────────────────────────────────────────────────
-export function formatPrice(amount: number, currency: Currency, locale: Locale = 'uz'): string {
-  if (currency === 'UZS') {
-    return `${amount.toLocaleString('uz-UZ')} so'm`
-  }
-  return `₩${amount.toLocaleString('ko-KR')}`
+export function formatPrice(amount: number, _currency: Currency = 'UZS', _locale: Locale = 'en'): string {
+  return `${amount.toLocaleString('uz-UZ')} so'm`
 }
 
-export function getProductPrice(product: Product, locale: Locale): number {
-  return locale === 'ko' ? product.priceKRW : product.priceUZS
+export function getProductPrice(product: Product, _locale: Locale): number {
+  return product.priceUZS
 }
 
-export function getProductOriginalPrice(product: Product, locale: Locale): number | undefined {
-  return locale === 'ko' ? product.originalPriceKRW : product.originalPriceUZS
+export function getProductOriginalPrice(product: Product, _locale: Locale): number | undefined {
+  return product.originalPriceUZS
 }
 
-export function getCurrency(locale: Locale): Currency {
-  return locale === 'ko' ? 'KRW' : 'UZS'
+export function getCurrency(_locale: Locale): Currency {
+  return 'UZS'
 }
 
 // ─── Date utilities ───────────────────────────────────────────────────────────
-const LOCALE_MAP: Record<Locale, string> = { uz: 'uz-UZ', ru: 'ru-RU', ko: 'ko-KR', en: 'en-US' }
+const LOCALE_MAP: Record<Locale, string> = { uz: 'uz-UZ', en: 'en-US' }
 
-export function formatDate(iso: string, locale: Locale = 'uz'): string {
+export function formatDate(iso: string, locale: Locale = 'en'): string {
   return new Date(iso).toLocaleDateString(LOCALE_MAP[locale], {
     day: 'numeric', month: 'short', year: 'numeric',
   })
@@ -56,9 +52,6 @@ export function truncate(str: string, max: number): string {
 // ─── Validation ───────────────────────────────────────────────────────────────
 export function isValidUzPhone(phone: string): boolean {
   return /^\+998\d{9}$/.test(phone.replace(/\s/g, ''))
-}
-export function isValidKrPhone(phone: string): boolean {
-  return /^01[0-9]-?\d{4}-?\d{4}$/.test(phone.replace(/\s/g, ''))
 }
 
 // ─── localStorage (SSR-safe) ──────────────────────────────────────────────────

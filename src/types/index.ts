@@ -4,10 +4,11 @@
 // When the backend is connected, these shapes must match API response contracts.
 // ────────────────────────────────────────────────────────────────────────────
 
-export type Locale   = 'uz' | 'ru' | 'ko' | 'en'
+export type Locale   = 'uz' | 'en'
 export type Currency = 'UZS' | 'KRW'
 
-export type LocalizedString = { uz: string; ru: string; ko: string; en?: string }
+/** uz is required; en is optional for override. ru/ko kept as optional for legacy data. */
+export type LocalizedString = { uz: string; en?: string; ru?: string; ko?: string }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 export interface User {

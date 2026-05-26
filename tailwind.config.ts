@@ -63,7 +63,9 @@ const config: Config = {
         'brand-lg': '0 8px 32px 0 rgb(0 0 0 / 0.24)',
         'cobalt':   '0 4px 20px 0 rgb(0 122 255 / 0.25)',
         'inner-sm': 'inset 0 1px 4px 0 rgb(0 0 0 / 0.08)',
-        'glass':    '0 8px 32px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.2)',
+        'glass':    '0 8px 32px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.20)',
+        'glow-cobalt': '0 0 24px rgb(0 122 255 / 0.35)',
+        'glow-white':  '0 0 20px rgb(255 255 255 / 0.18)',
       },
       keyframes: {
         'fade-up':   { '0%': { opacity: '0', transform: 'translateY(24px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },

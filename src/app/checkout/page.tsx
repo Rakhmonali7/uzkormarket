@@ -48,11 +48,11 @@ export default function CheckoutPage() {
   const router     = useRouter()
   const { locale } = useLocale()
   const { tr }     = useTranslations()
-  const { items, totalUZS, totalKRW, clearCart } = useCartStore()
+  const { items, totalUZS, clearCart } = useCartStore()
 
   const currency = getCurrency(locale)
-  const subtotal = locale === 'ko' ? totalKRW() : totalUZS()
-  const DELIVERY = locale === 'ko' ? 3_000 : 20_000
+  const subtotal = totalUZS()
+  const DELIVERY = 20_000
   const total    = subtotal + DELIVERY
 
   const [step,    setStep]    = useState<Step>(0)
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState<DeliveryAddress>({
     recipientName: '',
     phone:         '',
-    country:       locale === 'ko' ? 'South Korea' : 'Uzbekistan',
+    country:       'Uzbekistan',
     region:        '',
     city:          '',
     street:        '',
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
         items: items.map(i => ({
           id: i.productId, productId: i.productId,
           product: i.product, quantity: i.quantity,
-          unitPrice: locale === 'ko' ? i.product.priceKRW : i.product.priceUZS,
+          unitPrice: i.product.priceUZS,
           currency,
         })) as any,
         deliveryAddress: address,
@@ -338,14 +338,11 @@ export default function CheckoutPage() {
               {items.map(item => (
                 <div key={item.productId} className="flex gap-2 text-sm">
                   <span className="flex-1 clamp-2 text-zinc-600 dark:text-zinc-400">
-                    {item.product.title[locale] || item.product.title.uz}
+                    {item.product.title[locale] ?? item.product.title.uz}
                     <span className="text-zinc-400 ml-1">×{item.quantity}</span>
                   </span>
                   <span className="flex-shrink-0 font-bold text-zinc-900 dark:text-zinc-100">
-                    {formatPrice(
-                      (locale === 'ko' ? item.product.priceKRW : item.product.priceUZS) * item.quantity,
-                      currency, locale
-                    )}
+                    {formatPrice(item.product.priceUZS * item.quantity, currency, locale)}
                   </span>
                 </div>
               ))}

@@ -11,9 +11,22 @@ export const metadata: Metadata = {
   description: 'Shop authentic Korean products delivered to Uzbekistan. K-beauty, food, electronics and more.',
 }
 
+/** Inline script prevents flash of wrong theme before React hydrates */
+const themeScript = `
+(function(){try{
+  var s=JSON.parse(localStorage.getItem('kum-ui')||'{}');
+  if(s&&s.state&&s.state.theme==='dark'){
+    document.documentElement.classList.add('dark');
+  }
+}catch(e){}})();
+`
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         <Providers>
           <WelcomePopup />

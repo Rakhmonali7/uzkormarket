@@ -32,13 +32,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-01', slug: 'cosrx-snail-mucin-essence',
     title: {
       uz: 'COSRX Salyangoz essensi 96%',
-      ru: 'COSRX Эссенция с муцином улитки 96%',
-      ko: 'COSRX 어드밴시드 스네일 뮤신 에센스 96%',
+      en: 'COSRX Advanced Snail 96 Mucin Power Essence',
     },
     description: {
       uz: "Koreya parvarishining eng mashhur mahsuloti. Terini tiklash, namlantirishga yordam beradi.",
-      ru: "Самое популярное корейское средство ухода. Восстанавливает и увлажняет кожу.",
-      ko: "피부 재생과 보습에 탁월한 한국 스킨케어의 베스트셀러.",
+      en: "Korea's best-selling skincare. Repairs and deeply hydrates skin with 96% snail secretion filtrate.",
     },
     category: 'beauty', origin: 'KR', sellerId: 'seller-kr-1',
     images: [
@@ -58,13 +56,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-02', slug: 'laneige-lip-sleeping-mask',
     title: {
       uz: 'Laneige tungi lab niqobi',
-      ru: 'Laneige Ночная маска для губ',
-      ko: '라네즈 립 슬리핑 마스크',
+      en: 'Laneige Lip Sleeping Mask',
     },
     description: {
       uz: "Tungi parvarishdagi eng mashhur koreya lab mahsuloti. 8 ta vitamini bilan lablarni tiklaydi.",
-      ru: "Самая популярная ночная маска для губ из Кореи. Восстанавливает с 8 витаминами.",
-      ko: "한국에서 가장 인기 있는 립 나이트 케어. 8가지 비타민으로 입술을 회복.",
+      en: "Korea's most popular overnight lip treatment. Repairs and nourishes lips with 8 berry extracts.",
     },
     category: 'beauty', origin: 'KR', sellerId: 'seller-kr-1',
     images: [
@@ -81,13 +77,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-03', slug: 'samyang-buldak-ramen-5pack',
     title: {
       uz: "Samyang Buldak ramen (5 ta to'plam)",
-      ru: 'Samyang Buldak рамен (набор 5 шт)',
-      ko: '삼양 불닭볶음면 (5개입)',
+      en: 'Samyang Buldak Spicy Ramen (5-Pack)',
     },
     description: {
       uz: "Jahon bo'ylab mashhur koreya o'tkir ramen. Har bir quti qo'shimcha sous bilan.",
-      ru: "Всемирно известный корейский острый рамен. Каждый пакет с дополнительным соусом.",
-      ko: "세계적으로 유명한 불닭볶음면. 각 팩마다 추가 소스 포함.",
+      en: "The world-famous Korean fire noodles. Each pack includes extra sauce for maximum heat.",
     },
     category: 'food', origin: 'KR', sellerId: 'seller-kr-2',
     images: [
@@ -106,13 +100,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-04', slug: 'innisfree-green-tea-serum',
     title: {
       uz: 'Innisfree Yashil choy serumi',
-      ru: 'Innisfree Сыворотка с зелёным чаем',
-      ko: 'innisfree 제주 그린티 씨드 세럼',
+      en: 'Innisfree Jeju Green Tea Seed Serum',
     },
     description: {
       uz: "Jejudo organik yashil choyi bilan antioxidant serum. Porlarni toraytiradi.",
-      ru: "Антиоксидантная сыворотка с органическим зелёным чаем с Чеджудо.",
-      ko: "제주도 유기농 녹차로 만든 안티옥시던트 세럼. 모공을 줄여줍니다.",
+      en: "Antioxidant serum with organic green tea from Jeju Island. Minimizes pores and hydrates.",
     },
     category: 'beauty', origin: 'KR', sellerId: 'seller-kr-1',
     images: [
@@ -129,13 +121,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-05', slug: 'korean-sheet-mask-set-20',
     title: {
       uz: "Koreya yuz niqoblari (20 ta to'plam)",
-      ru: 'Корейские маски для лица (набор 20 шт)',
-      ko: '한국 시트 마스크팩 세트 (20매)',
+      en: 'Korean Sheet Mask Set (20 Pack)',
     },
     description: {
       uz: "Turli xil formula: namlantirich, yorqinlik va qarishga qarshi. Dermatolog tomonidan sinovdan o'tgan.",
-      ru: "Разные формулы: увлажнение, сияние и антивозрастной уход. Дерматологически протестированы.",
-      ko: "보습, 미백, 안티에이징 다양한 포뮬라. 피부과 테스트 완료.",
+      en: "Variety formulas: hydrating, brightening, and anti-aging. Dermatologist tested.",
     },
     category: 'beauty', origin: 'KR', sellerId: 'seller-kr-1',
     images: [
@@ -154,13 +144,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-06', slug: 'jeju-matcha-powder-100g',
     title: {
       uz: "Jeju organik matcha kukuni 100g",
-      ru: 'Органическая матча Чеджудо 100г',
-      ko: '제주 유기농 말차 파우더 100g',
+      en: 'Jeju Organic Matcha Powder 100g',
     },
     description: {
       uz: "Jejudo orolidan keltirilgan organik matcha. Sutli ichimliklar va desertlar uchun.",
-      ru: "Органическая матча с острова Чеджудо. Для молочных напитков и десертов.",
-      ko: "제주도 산 유기농 말차. 라떼와 디저트에 최적.",
+      en: "Organic matcha from Jeju Island. Perfect for lattes, desserts, and baking.",
     },
     category: 'food', origin: 'KR', sellerId: 'seller-kr-2',
     images: [
@@ -177,13 +165,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-07', slug: 'anker-powercore-20000',
     title: {
       uz: 'Anker PowerCore 20000mAh quvvat banki',
-      ru: 'Anker PowerCore 20000mAh внешний аккумулятор',
-      ko: 'Anker PowerCore 보조배터리 20000mAh',
+      en: 'Anker PowerCore 20000mAh Portable Charger',
     },
     description: {
       uz: "3 qurilmani bir vaqtda zaryadlaydi. USB-C va USB-A portlari. Samolyotga ruxsat etilgan.",
-      ru: "Заряжает 3 устройства одновременно. Порты USB-C и USB-A. Разрешён на борту.",
-      ko: "3개 기기 동시 충전. USB-C, USB-A 포트. 기내 반입 허용.",
+      en: "Charges 3 devices simultaneously. USB-C and USB-A ports. Airline approved.",
     },
     category: 'electronics', origin: 'KR', sellerId: 'seller-kr-1',
     images: [
@@ -202,13 +188,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-kr-08', slug: 'black-garlic-honey-wellness',
     title: {
       uz: "Koreya qora sarimsoq asali (fermentlangan)",
-      ru: 'Корейский ферментированный чёрный чеснок с мёдом',
-      ko: '한국 발효 흑마늘 꿀',
+      en: 'Korean Black Garlic Honey (Fermented)',
     },
     description: {
       uz: "90 kun davomida fermentlangan qora sarimsoq. Immunitetni mustahkamlaydi. 100% tabiiy.",
-      ru: "Ферментирован 90 дней. Укрепляет иммунитет. 100% натуральный.",
-      ko: "90일 숙성 발효 흑마늘. 면역 강화. 100% 천연.",
+      en: "Fermented for 90 days. Boosts immunity and energy. 100% natural, no additives.",
     },
     category: 'health', origin: 'KR', sellerId: 'seller-kr-2',
     images: [
@@ -227,13 +211,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-01', slug: 'samarqand-atlas-ipak-shal',
     title: {
       uz: "Samarqand atlas ipak shol (qo'lda to'qilgan)",
-      ru: 'Шёлковый платок атлас из Самарканда (ручная работа)',
-      ko: '사마르칸트 아틀라스 실크 스카프 (수공예)',
+      en: 'Samarkand Atlas Silk Scarf (Handwoven)',
     },
     description: {
       uz: "500 yillik an'anaviy Samarqand atlasi. Har biri qo'lda to'qilgan, noyob naqshlar bilan.",
-      ru: "Традиционный самаркандский атлас. Каждый соткан вручную с уникальными узорами.",
-      ko: "500년 전통 사마르칸트 아틀라스. 각각 수작업으로 짠 독특한 패턴.",
+      en: "500-year traditional Samarkand atlas silk. Each piece handwoven with unique patterns.",
     },
     category: 'fashion', origin: 'UZ', sellerId: 'seller-uz-1',
     images: [
@@ -250,13 +232,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-02', slug: 'uzbek-plov-spice-set',
     title: {
       uz: "O'zbek oshi uchun ziravorlar to'plami (8 xil)",
-      ru: 'Набор специй для узбекского плова (8 видов)',
-      ko: '우즈베크 플로프 향신료 세트 (8종)',
+      en: "Uzbek Plov Spice Set (8 Varieties)",
     },
     description: {
       uz: "Haqiqiy o'zbek oshi ta'mini yaratish uchun Farg'ona vodiysidan 8 xil ziravor.",
-      ru: "8 специй из Ферганской долины для настоящего плова.",
-      ko: "정통 우즈베크 플로프를 위한 페르가나 계곡산 향신료 8종.",
+      en: "8 authentic spices from the Fergana Valley for making perfect Uzbek plov.",
     },
     category: 'food', origin: 'UZ', sellerId: 'seller-uz-2',
     images: [
@@ -273,13 +253,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-03', slug: 'bukhara-ceramic-bowl-set-6',
     title: {
       uz: "Buxoro keramika kosa to'plami (6 ta)",
-      ru: 'Бухарский керамический набор пиал (6 шт)',
-      ko: '부하라 세라믹 볼 세트 (6개)',
+      en: 'Bukhara Ceramic Bowl Set (6 Pieces)',
     },
     description: {
       uz: "An'anaviy Buxoro keramikasi. Har biri qo'lda bo'yalgan. Samsa, lag'mon uchun ideal.",
-      ru: "Традиционная бухарская керамика. Каждая расписана вручную. Идеально для самсы и лагмана.",
-      ko: "전통 부하라 도자기. 각각 손으로 그린 그림. 삼사, 라그만에 완벽.",
+      en: "Traditional Bukhara ceramics. Each hand-painted. Perfect for samsa and lagman.",
     },
     category: 'home', origin: 'UZ', sellerId: 'seller-uz-1',
     images: [
@@ -296,13 +274,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-04', slug: 'uzbek-dried-fruits-premium-1kg',
     title: {
       uz: "O'zbek quritilgan mevalar to'plami 1 kg",
-      ru: "Узбекские сухофрукты премиум 1 кг",
-      ko: "우즈베크 프리미엄 말린 과일 세트 1kg",
+      en: 'Uzbek Premium Dried Fruits Set 1kg',
     },
     description: {
       uz: "Qo'qon bozoridan: o'rik, anjir, mayiz, xurmo. Qand qo'shilmagan, 100% tabiiy.",
-      ru: "С Кокандского базара: абрикос, инжир, изюм, хурма. Без сахара, 100% натуральный.",
-      ko: "코칸드 시장에서: 살구, 무화과, 건포도, 감. 무설탕, 100% 천연.",
+      en: "From Kokand bazaar: apricots, figs, raisins, persimmon. No sugar added, 100% natural.",
     },
     category: 'food', origin: 'UZ', sellerId: 'seller-uz-2',
     images: [
@@ -319,13 +295,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-05', slug: 'suzani-wall-art-handembroidered',
     title: {
       uz: "Suzanna devor bezagi (qo'lda tikilgan)",
-      ru: "Сюзане настенное украшение (ручная вышивка)",
-      ko: "수자니 벽 장식 (수제 자수)",
+      en: 'Suzani Wall Art (Hand-Embroidered)',
     },
     description: {
       uz: "O'zbek ayollari tomonidan qo'lda tikilgan suzanna. Har biri noyob san'at asari.",
-      ru: "Традиционное сюзане, вышитое вручную. Каждое — уникальное произведение искусства.",
-      ko: "우즈베크 여성이 손으로 수놓은 수자니. 각각 독특한 예술 작품.",
+      en: "Hand-embroidered by Uzbek artisans. Each piece is a unique work of art.",
     },
     category: 'crafts', origin: 'UZ', sellerId: 'seller-uz-1',
     images: [
@@ -342,13 +316,11 @@ export const PRODUCTS: Product[] = [
     id: 'prod-uz-06', slug: 'uzbek-silk-carpet-mini',
     title: {
       uz: "O'zbek ipak gilamlari (mini, 50×80 sm)",
-      ru: "Узбекский шёлковый ковёр мини (50×80 см)",
-      ko: "우즈베크 실크 미니 카펫 (50×80cm)",
+      en: 'Uzbek Silk Mini Carpet (50×80cm)',
     },
     description: {
       uz: "Buxoro ustaxonasidan 100% ipak gilamcha. Naqshlar qo'lda chizilgan.",
-      ru: "100% шёлковый коврик из бухарской мастерской. Узоры нанесены вручную.",
-      ko: "부하라 공방의 100% 실크 미니 카펫. 문양은 수작업으로 그림.",
+      en: "100% silk carpet from Bukhara workshop. Patterns drawn and woven by hand.",
     },
     category: 'home', origin: 'UZ', sellerId: 'seller-uz-1',
     images: [
