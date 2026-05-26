@@ -1,9 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { X, ArrowRight } from 'lucide-react'
+import { X, ArrowRight, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/config'
+
+const TELEGRAM_AGENT_URL = 'https://t.me/koruzmarket_agent'
 
 export function WelcomePopup() {
   const [visible, setVisible] = useState(false)
@@ -84,19 +86,28 @@ export function WelcomePopup() {
           </div>
 
           {/* CTAs */}
-          <div className="flex items-center gap-3">
-            <Link href={ROUTES.products} onClick={close} className="flex-1">
-              <button className={cn(
-                'btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold'
-              )}>
-                🇰🇷 Shop Korean Products
-                <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center gap-3">
+              <Link href={ROUTES.products} onClick={close} className="flex-1">
+                <button className={cn(
+                  'btn-brand w-full h-12 flex items-center justify-center gap-2 text-sm font-bold'
+                )}>
+                  🇰🇷 Shop Korean Products
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </Link>
+              <button onClick={close}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all text-lg font-light">
+                ✕
               </button>
-            </Link>
-            <button onClick={close}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all text-lg font-light">
-              ✕
-            </button>
+            </div>
+            <a href={TELEGRAM_AGENT_URL} target="_blank" rel="noopener noreferrer">
+              <button className="w-full h-11 flex items-center justify-center gap-2 text-sm font-semibold rounded-full transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: 'rgba(0,136,204,0.09)', border: '1px solid rgba(0,136,204,0.22)', color: '#0088cc' }}>
+                <Send className="h-3.5 w-3.5" />
+                Hire Your Agent
+              </button>
+            </a>
           </div>
 
           <p onClick={close}

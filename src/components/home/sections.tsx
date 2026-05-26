@@ -164,14 +164,16 @@ export function CategoryGrid() {
             className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group animate-fade-up"
             style={{ animationDelay: `${i * 40}ms`, width: 76 }}>
             <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all duration-200 group-hover:-translate-y-1.5 group-hover:scale-[1.10]"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-2xl overflow-hidden transition-transform duration-200 group-hover:-translate-y-1.5"
               style={{
                 background: 'var(--g-bg)',
                 backdropFilter: 'blur(20px) saturate(2)',
                 border: '1px solid var(--g-border)',
                 boxShadow: 'var(--g-shadow)',
               }}>
-              {cat.icon}
+              <span className="transition-transform duration-200 group-hover:scale-[1.15] inline-block">
+                {cat.icon}
+              </span>
             </div>
             <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 text-center group-hover:text-zinc-900 dark:group-hover:text-white transition-colors leading-tight">
               {locale === 'uz' ? cat.uz : cat.en}
